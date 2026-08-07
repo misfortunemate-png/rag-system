@@ -66,17 +66,6 @@ def _model_selector(label: str, key_prefix: str, current: str) -> str:
     return sel
 
 
-def _render_usage_row(label: str, model: str, usage: dict, elapsed: float) -> None:
-    inp = usage.get("input_tokens", 0)
-    out = usage.get("output_tokens", 0)
-    cost = estimate_cost(model, inp, out)
-    cost_str = f"≈${cost:.4f}" if cost is not None else "―"
-    st.caption(
-        f"**{label}** ({model.split('/')[-1]}) | "
-        f"in {inp:,} / out {out:,} tok | {elapsed:.1f}s | {cost_str}"
-    )
-
-
 def _load_eval_questions(path: str) -> list:
     p = Path(path)
     if not p.exists():
@@ -108,6 +97,69 @@ def _render_trace_entries(trace: list) -> None:
                 st.write(f'📖 read_section: "{inp.get("hierarchy", "")}"')
             else:
                 st.write(f"🔧 {name}: {inp}")
+
+
+def _build_meta(debug: dict, t_total: float) -> dict:
+    return {
+        "t_total": round(t_total, 1),
+        "planner": debug.get("planner", {}),
+        "loop": debug.get("loop", {}),
+        "composer": debug.get("composer", {}),
+        "config": debug.get("config", {}),
+    }
+
+
+def _render_meta_footer(meta: dict | None) -> None:
+    if not meta:
+        return
+    planner = meta.get("planner", {})
+    loop = meta.get("loop", {})
+    composer = meta.get("composer", {})
+    cfg = meta.get("config", {})
+
+    stage_parts = []
+    if planner.get("usage"):
+        u = planner["usage"]
+        stage_parts.append(
+            f"🗺 {planner.get('time_s', 0):.1f}s "
+            f"({u.get('input_tokens', 0):,}/{u.get('output_tokens', 0):,}tok)"
+        )
+    if loop.get("usage"):
+        u = loop["usage"]
+        stage_parts.append(
+            f"🔄×{loop.get('loops', '?')} {loop.get('time_s', 0):.1f}s "
+            f"({u.get('input_tokens', 0):,}/{u.get('output_tokens', 0):,}tok)"
+        )
+    if composer.get("usage"):
+        u = composer["usage"]
+        stage_parts.append(
+            f"✍ {composer.get('time_s', 0):.1f}s "
+            f"({u.get('input_tokens', 0):,}/{u.get('output_tokens', 0):,}tok)"
+        )
+
+    total_cost = 0.0
+    has_cost = False
+    for role_dbg in [planner, loop, composer]:
+        cost = estimate_cost(
+            role_dbg.get("model", ""),
+            role_dbg.get("usage", {}).get("input_tokens", 0),
+            role_dbg.get("usage", {}).get("output_tokens", 0),
+        )
+        if cost is not None:
+            total_cost += cost
+            has_cost = True
+
+    model_parts = []
+    if cfg.get("planner_enabled"):
+        model_parts.append(f"planner={cfg.get('planner_model', '').split('/')[-1]}")
+    model_parts.append(f"loop={cfg.get('loop_model', '').split('/')[-1]}")
+    model_parts.append(f"composer={cfg.get('composer_model', '').split('/')[-1]}")
+
+    timing_line = f"合計 {meta['t_total']:.1f}s　" + "　".join(stage_parts)
+    cost_str = f"≈${total_cost:.4f}" if has_cost else "―"
+    model_line = f"{cost_str}　" + " / ".join(model_parts)
+    st.caption(timing_line)
+    st.caption(model_line)
 
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -165,35 +217,11 @@ with st.sidebar:
 
         dbg = st.session_state.last_debug
         if dbg:
-            st.markdown("**トークン・コスト・時間**")
-            if dbg.get("planner") and dbg["planner"].get("usage"):
-                _render_usage_row(
-                    "プランナー",
-                    dbg["planner"].get("model", ""),
-                    dbg["planner"]["usage"],
-                    dbg["planner"].get("time_s", 0),
-                )
-            loop = dbg.get("loop", {})
-            if loop.get("usage"):
-                _render_usage_row(
-                    f"実行ループ ({loop.get('loops', '?')}回)",
-                    loop.get("model", ""),
-                    loop["usage"],
-                    loop.get("time_s", 0),
-                )
-                if loop.get("max_loops_hit"):
-                    st.warning("⚠️ MAX_LOOPS に到達しました")
-            comp = dbg.get("composer", {})
-            if comp.get("usage"):
-                _render_usage_row(
-                    "コンポーザー",
-                    comp.get("model", ""),
-                    comp["usage"],
-                    comp.get("time_s", 0),
-                )
+            if dbg.get("loop", {}).get("max_loops_hit"):
+                st.warning("⚠️ MAX_LOOPS に到達しました")
 
             if dbg.get("planner", {}).get("raw_response"):
-                with st.expander("プランナー出力"):
+                with st.expander("プランナー出力（生）"):
                     st.text(dbg["planner"]["raw_response"])
 
             if dbg.get("raw_composer_output"):
@@ -274,6 +302,7 @@ with left:
                     st.markdown("**✍ コンポーザー**")
                     _render_thinking(item["composer_thinking"])
             st.markdown(item["answer"])
+            _render_meta_footer(item.get("meta"))
 
     # Pending question from sidebar eval buttons
     pending = st.session_state.pop("pending_question", None)
@@ -316,6 +345,8 @@ with left:
 
             if result:
                 st.markdown(result["answer"])
+                meta = _build_meta(result.get("debug", {}), t_total)
+                _render_meta_footer(meta)
 
         if result:
             current_result = result
@@ -332,6 +363,7 @@ with left:
                     "planner_output": result.get("planner_output"),
                     "planner_thinking": dbg.get("planner", {}).get("thinking"),
                     "composer_thinking": dbg.get("composer", {}).get("thinking"),
+                    "meta": _build_meta(dbg, t_total),
                 }
             )
 

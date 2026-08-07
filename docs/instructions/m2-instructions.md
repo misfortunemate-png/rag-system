@@ -10,7 +10,7 @@ M1のagent queryをStreamlit UIで動作させる。チャット＋トレース�
 
 ## マニフェスト（着工前照合）
 
-M1の全成果物が存在すること（src/配下、data/chunks.jsonl、chroma_db/）。加えて：
+M1の全成果物が存在すること（src/配下、data/chunks.jsonl、data/chroma/）。加えて：
 
 | # | パス | 種別 |
 |---|---|---|
@@ -22,6 +22,8 @@ M1の全成果物が存在すること（src/配下、data/chunks.jsonl、chroma
 ## 作業範囲
 
 app.py 1ファイルの新規作成が主。M1のsrc/配下は原則触らない（UIから呼ぶインターフェースの軽微な調整は可）。
+
+追加: requirements.txt に streamlit を追加すること。
 
 ## レイアウト（spec §7準拠）
 
@@ -66,18 +68,16 @@ app.py 1ファイルの新規作成が主。M1のsrc/配下は原則触らない
 - React等への置き換え（M2はStreamlit固定）
 - M1のagent.pyの大規模リファクタ（インターフェース調整の軽微な変更のみ可）
 - 認証・マルチユーザー機能
+- ショウゴさんにPowerShellコマンドを叩かせること（R-015）
 
 ## 完了条件
 
-- `streamlit run app.py` で起動し、質問→トレース→回答→根拠パネルの一連が動作すること
+- start.bat のダブルクリックで起動し、質問→トレース→回答→根拠パネルの一連が動作すること
 - GIF撮影可能な状態（実際のGIF撮影は発注者が行う）
 - push済み
 
-## 起動コマンド
+## 起動手順
 
-```powershell
-$env:LLM_PROVIDER = "openrouter"
-$env:LLM_MODEL = "deepseek/deepseek-v4-flash"
-$env:OPENROUTER_API_KEY = "sk-or-..."
-streamlit run app.py
-```
+1. setup.bat をダブルクリック（初回のみ。venv作成＋依存インストール）
+2. .env.example を .env にコピーし、APIキーを記入
+3. start.bat をダブルクリック（.envから環境変数を読み込み、streamlit run app.py を実行）

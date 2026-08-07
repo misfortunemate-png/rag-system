@@ -18,6 +18,7 @@ Internal message format used by agent.py:
 """
 import json
 import os
+import re
 from typing import NamedTuple
 
 DEFAULT_OPENROUTER_MODEL = "google/gemini-2.5-flash"
@@ -41,6 +42,19 @@ class LLMResponse(NamedTuple):
     text: str | None
     tool_calls: list  # list[ToolCall]
     usage: dict       # {"input_tokens": int, "output_tokens": int}
+    thinking: str | None = None  # chain-of-thought if available
+
+
+def _extract_thinking(text: str | None) -> tuple:
+    """Split <think>...</think> from text. Returns (thinking, clean_text)."""
+    if not text:
+        return None, text
+    m = re.search(r"<think>(.*?)</think>", text, re.DOTALL)
+    if m:
+        thinking = m.group(1).strip() or None
+        clean = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+        return thinking, clean
+    return None, text
 
 
 def _to_openai_tools(tools: list[dict]) -> list[dict]:
@@ -155,8 +169,9 @@ class OpenRouterClient:
             "output_tokens": resp.usage.completion_tokens if resp.usage else 0,
         }
         if choice.finish_reason == "tool_calls" and msg.tool_calls:
+            thinking, clean_text = _extract_thinking(msg.content)
             return LLMResponse(
-                text=msg.content,
+                text=clean_text,
                 tool_calls=[
                     ToolCall(
                         id=tc.id,
@@ -166,8 +181,10 @@ class OpenRouterClient:
                     for tc in msg.tool_calls
                 ],
                 usage=usage,
+                thinking=thinking,
             )
-        return LLMResponse(text=msg.content, tool_calls=[], usage=usage)
+        thinking, clean_text = _extract_thinking(msg.content)
+        return LLMResponse(text=clean_text, tool_calls=[], usage=usage, thinking=thinking)
 
 
 class AnthropicClient:
@@ -194,6 +211,10 @@ class AnthropicClient:
             "input_tokens": resp.usage.input_tokens if resp.usage else 0,
             "output_tokens": resp.usage.output_tokens if resp.usage else 0,
         }
+        thinking_parts = [
+            b.thinking for b in resp.content if hasattr(b, "thinking") and b.type == "thinking"
+        ]
+        thinking = thinking_parts[0] if thinking_parts else None
         if resp.stop_reason == "tool_use":
             tool_calls = [
                 ToolCall(id=b.id, name=b.name, input=b.input)
@@ -205,9 +226,12 @@ class AnthropicClient:
                 text=text_parts[0] if text_parts else None,
                 tool_calls=tool_calls,
                 usage=usage,
+                thinking=thinking,
             )
         text_parts = [b.text for b in resp.content if b.type == "text"]
-        return LLMResponse(text=text_parts[0] if text_parts else "", tool_calls=[], usage=usage)
+        return LLMResponse(
+            text=text_parts[0] if text_parts else "", tool_calls=[], usage=usage, thinking=thinking
+        )
 
 
 def make_client(model: str | None = None) -> OpenRouterClient | AnthropicClient:

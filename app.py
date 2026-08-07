@@ -89,8 +89,16 @@ def _load_eval_questions(path: str) -> list:
     return qs
 
 
+def _render_thinking(thinking: str | None, label: str = "💭 thinking") -> None:
+    if thinking:
+        with st.expander(label, expanded=True):
+            st.text(thinking)
+
+
 def _render_trace_entries(trace: list) -> None:
     for step in trace:
+        st.markdown(f"**🔄 実行ループ — {step['loop']}回目**")
+        _render_thinking(step.get("thinking"))
         for tc in step["tool_calls"]:
             name = tc["name"]
             inp = tc["input"]
@@ -255,12 +263,16 @@ with left:
         with st.chat_message("user"):
             st.markdown(item["question"])
         with st.chat_message("assistant"):
-            if item.get("planner_output"):
-                with st.expander("🗺 プランナー出力", expanded=False):
+            with st.expander("エージェント動作ログ", expanded=False):
+                if item.get("planner_output"):
+                    st.markdown("**🗺 プランナー**")
+                    _render_thinking(item.get("planner_thinking"))
                     st.text(item["planner_output"])
-            if item.get("trace"):
-                with st.expander("エージェント動作ログ", expanded=False):
+                if item.get("trace"):
                     _render_trace_entries(item["trace"])
+                if item.get("composer_thinking"):
+                    st.markdown("**✍ コンポーザー**")
+                    _render_thinking(item["composer_thinking"])
             st.markdown(item["answer"])
 
     # Pending question from sidebar eval buttons
@@ -279,9 +291,18 @@ with left:
                     result = run(question, st.session_state.config)
                     t_total = time.perf_counter() - t_start
 
+                    # — プランナー ——————————————————————————————
                     if result.get("planner_output"):
-                        st.write(f"🗺 プランナー: {result['planner_output'][:120]}…")
+                        st.markdown("**🗺 プランナー**")
+                        _render_thinking(result["debug"]["planner"].get("thinking"))
+                        st.text(result["planner_output"])
+
+                    # — 実行ループ ——————————————————————————————
                     _render_trace_entries(result["trace"])
+
+                    # — コンポーザー ————————————————————————————
+                    st.markdown("**✍ コンポーザー**")
+                    _render_thinking(result["debug"]["composer"].get("thinking"))
 
                     status.update(
                         label=f"✅ 完了 ({t_total:.1f}s)",
@@ -299,6 +320,7 @@ with left:
         if result:
             current_result = result
             st.session_state.last_debug = result.get("debug")
+            dbg = result.get("debug", {})
             st.session_state.history.append(
                 {
                     "question": question,
@@ -308,6 +330,8 @@ with left:
                     "all_chunks": result.get("all_chunks", []),
                     "invalid_citations": result.get("invalid_citations", []),
                     "planner_output": result.get("planner_output"),
+                    "planner_thinking": dbg.get("planner", {}).get("thinking"),
+                    "composer_thinking": dbg.get("composer", {}).get("thinking"),
                 }
             )
 

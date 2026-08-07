@@ -132,6 +132,7 @@ def _run_planner(question: str, config: AgentConfig) -> tuple:
         "usage": resp.usage,
         "time_s": round(elapsed, 2),
         "raw_response": resp.text,
+        "thinking": resp.thinking,
     }
 
 
@@ -183,7 +184,11 @@ def _run_loop(question: str, plan: str | None, config: AgentConfig) -> tuple:
                         seen_ids.add(cid)
                         all_chunks.append(hit)
 
-        trace.append({"loop": loop_num + 1, "tool_calls": tool_call_records})
+        trace.append({
+            "loop": loop_num + 1,
+            "thinking": response.thinking,
+            "tool_calls": tool_call_records,
+        })
         logger.info(
             "loop %d: %s",
             loop_num + 1,
@@ -235,6 +240,7 @@ def _run_composer(question: str, all_chunks: list, config: AgentConfig) -> tuple
         "usage": resp.usage,
         "time_s": round(elapsed, 2),
         "raw_response": raw,
+        "thinking": resp.thinking,
     }
 
 

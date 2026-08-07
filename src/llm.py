@@ -20,11 +20,15 @@ import json
 import os
 from typing import NamedTuple
 
-# Default models: cost-optimal tool-calling models confirmed on each provider.
-# google/gemini-2.5-flash: cheapest capable model on OpenRouter with Japanese support (2026-08).
-# claude-haiku-4-5-20251001: cheapest Anthropic model with tool use.
 DEFAULT_OPENROUTER_MODEL = "google/gemini-2.5-flash"
 DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
+
+# Map OpenRouter "anthropic/..." IDs to Anthropic direct model IDs
+_ANTHROPIC_ID_MAP = {
+    "anthropic/claude-haiku-4-5": "claude-haiku-4-5-20251001",
+    "anthropic/claude-sonnet-4-5": "claude-sonnet-4-5",
+    "anthropic/claude-opus-5": "claude-opus-5",
+}
 
 
 class ToolCall(NamedTuple):
@@ -36,6 +40,7 @@ class ToolCall(NamedTuple):
 class LLMResponse(NamedTuple):
     text: str | None
     tool_calls: list  # list[ToolCall]
+    usage: dict       # {"input_tokens": int, "output_tokens": int}
 
 
 def _to_openai_tools(tools: list[dict]) -> list[dict]:
@@ -124,24 +129,31 @@ def _convert_messages_anthropic(messages: list[dict]) -> list[dict]:
 
 
 class OpenRouterClient:
-    def __init__(self):
+    def __init__(self, model: str | None = None):
         from openai import OpenAI
 
-        self.model = os.environ.get("LLM_MODEL", DEFAULT_OPENROUTER_MODEL)
+        self.model = model or os.environ.get("LLM_MODEL", DEFAULT_OPENROUTER_MODEL)
         self._client = OpenAI(
             api_key=os.environ["OPENROUTER_API_KEY"],
             base_url="https://openrouter.ai/api/v1",
         )
 
-    def chat(self, messages: list[dict], tools: list[dict], system: str) -> LLMResponse:
-        oai_messages = [{"role": "system", "content": system}] + _convert_messages_openai(messages)
-        resp = self._client.chat.completions.create(
-            model=self.model,
-            messages=oai_messages,
-            tools=_to_openai_tools(tools),
-        )
+    def chat(
+        self, messages: list[dict], tools: list[dict] | None = None, system: str = ""
+    ) -> LLMResponse:
+        oai_messages = (
+            [{"role": "system", "content": system}] if system else []
+        ) + _convert_messages_openai(messages)
+        kwargs: dict = {"model": self.model, "messages": oai_messages}
+        if tools:
+            kwargs["tools"] = _to_openai_tools(tools)
+        resp = self._client.chat.completions.create(**kwargs)
         choice = resp.choices[0]
         msg = choice.message
+        usage = {
+            "input_tokens": resp.usage.prompt_tokens if resp.usage else 0,
+            "output_tokens": resp.usage.completion_tokens if resp.usage else 0,
+        }
         if choice.finish_reason == "tool_calls" and msg.tool_calls:
             return LLMResponse(
                 text=msg.content,
@@ -153,25 +165,35 @@ class OpenRouterClient:
                     )
                     for tc in msg.tool_calls
                 ],
+                usage=usage,
             )
-        return LLMResponse(text=msg.content, tool_calls=[])
+        return LLMResponse(text=msg.content, tool_calls=[], usage=usage)
 
 
 class AnthropicClient:
-    def __init__(self):
+    def __init__(self, model: str | None = None):
         import anthropic
 
-        self.model = os.environ.get("LLM_MODEL", DEFAULT_ANTHROPIC_MODEL)
+        self.model = model or os.environ.get("LLM_MODEL", DEFAULT_ANTHROPIC_MODEL)
         self._client = anthropic.Anthropic()
 
-    def chat(self, messages: list[dict], tools: list[dict], system: str) -> LLMResponse:
-        resp = self._client.messages.create(
-            model=self.model,
-            max_tokens=2048,
-            system=system,
-            messages=_convert_messages_anthropic(messages),
-            tools=_to_anthropic_tools(tools),
-        )
+    def chat(
+        self, messages: list[dict], tools: list[dict] | None = None, system: str = ""
+    ) -> LLMResponse:
+        kwargs: dict = {
+            "model": self.model,
+            "max_tokens": 2048,
+            "messages": _convert_messages_anthropic(messages),
+        }
+        if system:
+            kwargs["system"] = system
+        if tools:
+            kwargs["tools"] = _to_anthropic_tools(tools)
+        resp = self._client.messages.create(**kwargs)
+        usage = {
+            "input_tokens": resp.usage.input_tokens if resp.usage else 0,
+            "output_tokens": resp.usage.output_tokens if resp.usage else 0,
+        }
         if resp.stop_reason == "tool_use":
             tool_calls = [
                 ToolCall(id=b.id, name=b.name, input=b.input)
@@ -179,15 +201,21 @@ class AnthropicClient:
                 if b.type == "tool_use"
             ]
             text_parts = [b.text for b in resp.content if b.type == "text"]
-            return LLMResponse(text=text_parts[0] if text_parts else None, tool_calls=tool_calls)
+            return LLMResponse(
+                text=text_parts[0] if text_parts else None,
+                tool_calls=tool_calls,
+                usage=usage,
+            )
         text_parts = [b.text for b in resp.content if b.type == "text"]
-        return LLMResponse(text=text_parts[0] if text_parts else "", tool_calls=[])
+        return LLMResponse(text=text_parts[0] if text_parts else "", tool_calls=[], usage=usage)
 
 
-def make_client() -> OpenRouterClient | AnthropicClient:
+def make_client(model: str | None = None) -> OpenRouterClient | AnthropicClient:
     provider = os.environ.get("LLM_PROVIDER", "openrouter").lower()
     if provider == "openrouter":
-        return OpenRouterClient()
+        return OpenRouterClient(model=model)
     if provider == "anthropic":
-        return AnthropicClient()
+        if model and model in _ANTHROPIC_ID_MAP:
+            model = _ANTHROPIC_ID_MAP[model]
+        return AnthropicClient(model=model)
     raise ValueError(f"Unknown LLM_PROVIDER: {provider!r}. Use 'openrouter' or 'anthropic'.")

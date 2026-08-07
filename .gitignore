@@ -7,3 +7,5 @@ dist/
 build/
 .venv/
 venv/
+settings.json
+data/chroma/

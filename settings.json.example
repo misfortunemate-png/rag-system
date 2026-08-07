@@ -1,0 +1,9 @@
+{
+  "planner_enabled": false,
+  "planner_model": "deepseek/deepseek-v4-flash",
+  "loop_model": "deepseek/deepseek-v4-flash",
+  "composer_model": "deepseek/deepseek-v4-flash",
+  "max_loops": 15,
+  "top_k": 3,
+  "answer_style": "standard"
+}

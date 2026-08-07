@@ -2,6 +2,15 @@
 Streamlit UI — M2
 Layout: left (chat + trace) | right (evidence panel)
 """
+import os
+from pathlib import Path
+
+# Fix CWD to repo root so relative paths in tools.py resolve correctly
+os.chdir(Path(__file__).parent)
+
+from dotenv import load_dotenv
+load_dotenv()
+
 import streamlit as st
 from src.agent import run
 

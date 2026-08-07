@@ -18,7 +18,7 @@ from src.tools import TOOLS, read_section, search_chunks
 
 logger = logging.getLogger(__name__)
 
-MAX_LOOPS = 10
+MAX_LOOPS = 15
 
 _SYSTEM_PROMPT = """\
 あなたは公共建築工事標準仕様書（電気設備工事編）の専門アシスタントです。

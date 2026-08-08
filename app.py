@@ -1,5 +1,5 @@
 """
-Streamlit UI — M3
+Streamlit UI — M4
 Layout: sidebar (settings + debug) | left (chat + trace) | right (evidence panel)
 """
 import json
@@ -16,7 +16,7 @@ load_dotenv()
 
 import streamlit as st
 
-from src.agent import run
+from src.agent import make_composer_stream, run, run_pre_composer
 from src.config import (
     ANSWER_STYLES,
     APP_VERSION,
@@ -86,6 +86,25 @@ def _render_thinking(thinking: str | None, label: str = "💭 thinking") -> None
 
 def _render_trace_entries(trace: list) -> None:
     for step in trace:
+        # Advisor entry
+        if step.get("advisor"):
+            decision = step.get("decision", "")
+            reason = step.get("reason", "")
+            icon = "🎯"
+            label = "守備範囲外裁定" if decision == "out_of_scope" else "再計画裁定"
+            st.markdown(f"**{icon} アドバイザー — {label}**")
+            st.caption(f"理由: {reason}")
+            new_qs = step.get("new_queries", [])
+            if new_qs:
+                st.caption("新クエリ: " + " / ".join(new_qs))
+            continue
+
+        # Early stop entry
+        if step.get("early_stop"):
+            st.markdown("**⏹ 早期打ち切り（連続空振りによる強制終了）**")
+            continue
+
+        # Normal loop entry
         st.markdown(f"**🔄 実行ループ — {step['loop']}回目**")
         _render_thinking(step.get("thinking"))
         for tc in step["tool_calls"]:
@@ -105,6 +124,7 @@ def _build_meta(debug: dict, t_total: float) -> dict:
         "planner": debug.get("planner", {}),
         "loop": debug.get("loop", {}),
         "composer": debug.get("composer", {}),
+        "advisor": debug.get("advisor", {}),
         "config": debug.get("config", {}),
     }
 
@@ -115,6 +135,7 @@ def _render_meta_footer(meta: dict | None) -> None:
     planner = meta.get("planner", {})
     loop = meta.get("loop", {})
     composer = meta.get("composer", {})
+    advisor = meta.get("advisor", {})
     cfg = meta.get("config", {})
 
     stage_parts = []
@@ -126,8 +147,18 @@ def _render_meta_footer(meta: dict | None) -> None:
         )
     if loop.get("usage"):
         u = loop["usage"]
+        loop_count = loop.get("loops", "?")
+        early_flag = "⏹" if loop.get("early_stop") else ""
         stage_parts.append(
-            f"🔄×{loop.get('loops', '?')} {loop.get('time_s', 0):.1f}s "
+            f"🔄×{loop_count}{early_flag} {loop.get('time_s', 0):.1f}s "
+            f"({u.get('input_tokens', 0):,}/{u.get('output_tokens', 0):,}tok)"
+        )
+    if advisor.get("usage"):
+        u = advisor["usage"]
+        decision = advisor.get("decision", "")
+        dec_icon = "🎯b" if decision == "out_of_scope" else "🎯a" if decision == "replan" else "🎯"
+        stage_parts.append(
+            f"{dec_icon} {advisor.get('time_s', 0):.1f}s "
             f"({u.get('input_tokens', 0):,}/{u.get('output_tokens', 0):,}tok)"
         )
     if composer.get("usage"):
@@ -139,7 +170,7 @@ def _render_meta_footer(meta: dict | None) -> None:
 
     total_cost = 0.0
     has_cost = False
-    for role_dbg in [planner, loop, composer]:
+    for role_dbg in [planner, loop, advisor, composer]:
         cost = estimate_cost(
             role_dbg.get("model", ""),
             role_dbg.get("usage", {}).get("input_tokens", 0),
@@ -153,6 +184,8 @@ def _render_meta_footer(meta: dict | None) -> None:
     if cfg.get("planner_enabled"):
         model_parts.append(f"planner={cfg.get('planner_model', '').split('/')[-1]}")
     model_parts.append(f"loop={cfg.get('loop_model', '').split('/')[-1]}")
+    if advisor.get("model"):
+        model_parts.append(f"advisor={advisor['model'].split('/')[-1]}")
     model_parts.append(f"composer={cfg.get('composer_model', '').split('/')[-1]}")
 
     timing_line = f"合計 {meta['t_total']:.1f}s　" + "　".join(stage_parts)
@@ -162,12 +195,42 @@ def _render_meta_footer(meta: dict | None) -> None:
     st.caption(model_line)
 
 
+def _finalize_result(question: str, pre: dict, answer: str, cited_ids: list,
+                     raw_composer: str, composer_debug: dict, t_total: float) -> dict:
+    """Assemble final result dict after streaming composer."""
+    all_chunks = pre["all_chunks"]
+    retrieved_set = {c["chunk_id"] for c in all_chunks}
+    valid_cited = [cid for cid in cited_ids if cid in retrieved_set]
+    invalid_citations = [cid for cid in cited_ids if cid not in retrieved_set]
+    cited_chunks = [c for c in all_chunks if c["chunk_id"] in set(valid_cited)]
+
+    debug = pre["debug_partial"].copy()
+    debug["composer"] = composer_debug
+    debug["raw_composer_output"] = raw_composer
+    debug["max_loops_hit"] = pre["debug_partial"]["loop"].get("max_loops_hit", False)
+
+    return {
+        "question": question,
+        "answer": answer,
+        "trace": pre["trace"],
+        "retrieved": pre["retrieved"],
+        "cited_chunk_ids": valid_cited,
+        "cited_chunks": cited_chunks,
+        "all_chunks": all_chunks,
+        "invalid_citations": invalid_citations,
+        "planner_output": pre["planner_output"],
+        "debug": debug,
+        "t_total": t_total,
+    }
+
+
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
 with st.sidebar:
     st.header("⚙️ 設定")
     cfg = st.session_state.config
 
+    # ── 三役モデル構成 ─────────────────────────────────────────────────────────
     st.subheader("三役モデル構成")
     planner_enabled = st.toggle("プランナー ON", value=cfg.planner_enabled)
 
@@ -179,6 +242,7 @@ with st.sidebar:
     loop_model = _model_selector("実行ループモデル", "loop", cfg.loop_model)
     composer_model = _model_selector("コンポーザーモデル", "composer", cfg.composer_model)
 
+    # ── チューニング ───────────────────────────────────────────────────────────
     st.subheader("チューニング")
     max_loops = st.slider("MAX_LOOPS", 5, 30, cfg.max_loops)
     top_k = st.slider("search top_k", 3, 15, cfg.top_k)
@@ -189,6 +253,37 @@ with st.sidebar:
         format_func=lambda x: ANSWER_STYLES[x],
     )
 
+    # ── アドバイザー ───────────────────────────────────────────────────────────
+    st.subheader("🎯 アドバイザー")
+    advisor_model = _model_selector("アドバイザーモデル", "advisor", cfg.advisor_model)
+
+    st.caption("**発動条件**（複数選択可・既定: 難航検知のみ）")
+    advisor_trigger_always = st.checkbox("常時（全質問・プランナー直後）", value=cfg.advisor_trigger_always)
+    advisor_trigger_planner = st.checkbox(
+        "プランナー裁量（advisor_recommended=true）",
+        value=cfg.advisor_trigger_planner,
+        disabled=not planner_enabled,
+        help="プランナーONのときのみ有効",
+    )
+    advisor_trigger_stall = st.checkbox("難航検知（連続空振り検知）", value=cfg.advisor_trigger_stall)
+    advisor_trigger_unresolved = st.checkbox(
+        "未決着（MAX_LOOPS到達時）", value=cfg.advisor_trigger_unresolved
+    )
+
+    if advisor_trigger_stall:
+        advisor_k = st.slider(
+            "難航検知 k（連続空振りループ数）", 1, 5, cfg.advisor_k,
+            help="直近kループ連続で新規チャンク獲得ゼロ かつ ループ数 > MAX_LOOPS/2 で発動"
+        )
+    else:
+        advisor_k = cfg.advisor_k
+
+    early_stop_k = st.slider(
+        "早期打ち切り k（安全網）", 2, 5, cfg.early_stop_k,
+        help="連続空振りがこのk以上続いたら問答無用で終了（アドバイザー発動後も有効）"
+    )
+
+    # Build new config
     new_cfg = AgentConfig(
         planner_enabled=planner_enabled,
         planner_model=planner_model,
@@ -197,6 +292,13 @@ with st.sidebar:
         max_loops=max_loops,
         top_k=top_k,
         answer_style=answer_style,
+        advisor_model=advisor_model,
+        advisor_trigger_always=advisor_trigger_always,
+        advisor_trigger_planner=advisor_trigger_planner,
+        advisor_trigger_stall=advisor_trigger_stall,
+        advisor_trigger_unresolved=advisor_trigger_unresolved,
+        advisor_k=advisor_k,
+        early_stop_k=early_stop_k,
     )
     if asdict(new_cfg) != asdict(cfg):
         st.session_state.config = new_cfg
@@ -220,6 +322,15 @@ with st.sidebar:
             if dbg.get("loop", {}).get("max_loops_hit"):
                 st.warning("⚠️ MAX_LOOPS に到達しました")
 
+            if dbg.get("loop", {}).get("early_stop"):
+                st.info("⏹ 早期打ち切りが発動しました")
+
+            advisor_dbg = dbg.get("advisor", {})
+            if advisor_dbg.get("decision"):
+                dec = advisor_dbg["decision"]
+                label = "守備範囲外" if dec == "out_of_scope" else "再計画"
+                st.info(f"🎯 アドバイザー発動: {label} — {advisor_dbg.get('reason', '')}")
+
             if dbg.get("planner", {}).get("raw_response"):
                 with st.expander("プランナー出力（生）"):
                     st.text(dbg["planner"]["raw_response"])
@@ -228,7 +339,6 @@ with st.sidebar:
                 with st.expander("コンポーザー生出力"):
                     st.text(dbg["raw_composer_output"])
 
-            # invalid_citations — read from last history item
             if st.session_state.history:
                 last = st.session_state.history[-1]
                 if last.get("invalid_citations"):
@@ -314,44 +424,55 @@ with left:
             st.markdown(question)
 
         with st.chat_message("assistant"):
-            with st.status("⏳ 回答を生成中...", expanded=True) as status:
-                try:
+            result = None
+            try:
+                with st.status("⏳ 回答を生成中...", expanded=True) as status:
                     t_start = time.perf_counter()
-                    result = run(question, st.session_state.config)
-                    t_total = time.perf_counter() - t_start
 
-                    # — プランナー ——————————————————————————————
-                    if result.get("planner_output"):
+                    # ── Planner + Loop ────────────────────────────────────────
+                    pre = run_pre_composer(question, st.session_state.config)
+
+                    if pre.get("planner_output"):
                         st.markdown("**🗺 プランナー**")
-                        _render_thinking(result["debug"]["planner"].get("thinking"))
-                        st.text(result["planner_output"])
+                        planner_thinking = pre["debug_partial"]["planner"].get("thinking")
+                        _render_thinking(planner_thinking)
+                        st.text(pre["planner_output"])
 
-                    # — 実行ループ ——————————————————————————————
-                    _render_trace_entries(result["trace"])
+                    _render_trace_entries(pre["trace"])
 
-                    # — コンポーザー ————————————————————————————
+                    # ── Composer (streaming) ──────────────────────────────────
                     st.markdown("**✍ コンポーザー**")
-                    _render_thinking(result["debug"]["composer"].get("thinking"))
+                    stream_gen, get_result_fn = make_composer_stream(
+                        question,
+                        pre["all_chunks"],
+                        st.session_state.config,
+                        pre.get("advisor_out_of_scope", False),
+                    )
+                    st.write_stream(stream_gen)
+
+                    answer, cited_ids, raw_composer, composer_debug = get_result_fn()
+                    t_total = time.perf_counter() - t_start
 
                     status.update(
                         label=f"✅ 完了 ({t_total:.1f}s)",
                         state="complete",
                         expanded=False,
                     )
-                except Exception as e:
-                    status.update(label="❌ エラー", state="error", expanded=True)
-                    st.error(f"エラーが発生しました: {e}")
-                    result = None
 
-            if result:
-                st.markdown(result["answer"])
-                meta = _build_meta(result.get("debug", {}), t_total)
+                result = _finalize_result(
+                    question, pre, answer, cited_ids, raw_composer, composer_debug, t_total
+                )
+                meta = _build_meta(result["debug"], t_total)
                 _render_meta_footer(meta)
+
+            except Exception as e:
+                st.error(f"エラーが発生しました: {e}")
+                result = None
 
         if result:
             current_result = result
-            st.session_state.last_debug = result.get("debug")
-            dbg = result.get("debug", {})
+            st.session_state.last_debug = result["debug"]
+            dbg = result["debug"]
             st.session_state.history.append(
                 {
                     "question": question,
@@ -363,7 +484,7 @@ with left:
                     "planner_output": result.get("planner_output"),
                     "planner_thinking": dbg.get("planner", {}).get("thinking"),
                     "composer_thinking": dbg.get("composer", {}).get("thinking"),
-                    "meta": _build_meta(dbg, t_total),
+                    "meta": _build_meta(dbg, result.get("t_total", 0)),
                 }
             )
 
@@ -386,7 +507,6 @@ with right:
     if not cited and not all_ch:
         st.info("質問すると出典条文がここに表示されます。")
     else:
-        # Cited chunks (default display)
         if cited:
             for chunk in cited:
                 with st.expander(f"📄 {chunk['hierarchy']}", expanded=True):
@@ -398,7 +518,6 @@ with right:
         else:
             st.info("引用チャンクなし（回答内で条文を引用できませんでした）")
 
-        # All retrieved chunks (folded)
         if all_ch:
             with st.expander(f"検索した全チャンク ({len(all_ch)}件)", expanded=False):
                 for chunk in all_ch:

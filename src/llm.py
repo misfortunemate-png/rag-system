@@ -19,7 +19,7 @@ Internal message format used by agent.py:
 import json
 import os
 import re
-from typing import NamedTuple
+from typing import Generator, NamedTuple
 
 DEFAULT_OPENROUTER_MODEL = "google/gemini-2.5-flash"
 DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
@@ -28,6 +28,8 @@ DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
 _ANTHROPIC_ID_MAP = {
     "anthropic/claude-haiku-4-5": "claude-haiku-4-5-20251001",
     "anthropic/claude-sonnet-4-5": "claude-sonnet-4-5",
+    "anthropic/claude-sonnet-4-6": "claude-sonnet-4-6",
+    "anthropic/claude-opus-4.6": "claude-opus-4-6",
     "anthropic/claude-opus-5": "claude-opus-5",
 }
 
@@ -186,6 +188,26 @@ class OpenRouterClient:
         thinking, clean_text = _extract_thinking(msg.content)
         return LLMResponse(text=clean_text, tool_calls=[], usage=usage, thinking=thinking)
 
+    def chat_stream(
+        self, messages: list[dict], system: str = "", _usage_holder: dict | None = None
+    ) -> Generator[str, None, None]:
+        """Yield text chunks from a streaming non-tool chat."""
+        oai_messages = (
+            [{"role": "system", "content": system}] if system else []
+        ) + _convert_messages_openai(messages)
+        stream = self._client.chat.completions.create(
+            model=self.model,
+            messages=oai_messages,
+            stream=True,
+            stream_options={"include_usage": True},
+        )
+        for chunk in stream:
+            if chunk.usage and _usage_holder is not None:
+                _usage_holder["input_tokens"] = chunk.usage.prompt_tokens or 0
+                _usage_holder["output_tokens"] = chunk.usage.completion_tokens or 0
+            if chunk.choices and chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
+
 
 class AnthropicClient:
     def __init__(self, model: str | None = None):
@@ -232,6 +254,25 @@ class AnthropicClient:
         return LLMResponse(
             text=text_parts[0] if text_parts else "", tool_calls=[], usage=usage, thinking=thinking
         )
+
+    def chat_stream(
+        self, messages: list[dict], system: str = "", _usage_holder: dict | None = None
+    ) -> Generator[str, None, None]:
+        """Yield text chunks from a streaming non-tool chat."""
+        kwargs: dict = {
+            "model": self.model,
+            "max_tokens": 2048,
+            "messages": _convert_messages_anthropic(messages),
+        }
+        if system:
+            kwargs["system"] = system
+        with self._client.messages.stream(**kwargs) as stream:
+            for text in stream.text_stream:
+                yield text
+            if _usage_holder is not None:
+                final = stream.get_final_message()
+                _usage_holder["input_tokens"] = final.usage.input_tokens
+                _usage_holder["output_tokens"] = final.usage.output_tokens
 
 
 def make_client(model: str | None = None) -> OpenRouterClient | AnthropicClient:

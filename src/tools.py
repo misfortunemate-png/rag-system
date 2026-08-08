@@ -98,13 +98,34 @@ def _get_chroma_col():
     return _chroma_col
 
 
-def search_chunks(query: str, domain: str | None = None, top_k: int = 3) -> list[dict]:
+def search_chunks(
+    query: str,
+    domain: str | None = None,
+    top_k: int = 3,
+    doc_ids: list | None = None,
+) -> list[dict]:
+    # doc_ids=None → no filter; doc_ids=[] → caller wants zero results
+    if doc_ids is not None and len(doc_ids) == 0:
+        return []
+
     model = _get_embed_model()
     vec = model.encode([QUERY_PREFIX + query], normalize_embeddings=True).tolist()[0]
 
     col = _get_chroma_col()
 
-    where = {"domain": domain} if domain else None
+    filters = []
+    if domain:
+        filters.append({"domain": domain})
+    if doc_ids:
+        filters.append({"doc_id": {"$in": doc_ids}})
+
+    if len(filters) == 0:
+        where = None
+    elif len(filters) == 1:
+        where = filters[0]
+    else:
+        where = {"$and": filters}
+
     results = col.query(
         query_embeddings=[vec],
         n_results=top_k,

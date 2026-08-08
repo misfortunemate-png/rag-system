@@ -24,6 +24,7 @@ from src.config import (
     AgentConfig,
     estimate_cost,
     load_config,
+    load_documents_yaml,
     save_config,
 )
 
@@ -120,7 +121,7 @@ def _render_trace_entries(trace: list) -> None:
                 st.write(f"🔧 {name}: {inp}")
 
 
-def _build_meta(debug: dict, t_total: float) -> dict:
+def _build_meta(debug: dict, t_total: float, scope_doc_count: int | None = None) -> dict:
     return {
         "t_total": round(t_total, 1),
         "planner": debug.get("planner", {}),
@@ -128,6 +129,7 @@ def _build_meta(debug: dict, t_total: float) -> dict:
         "composer": debug.get("composer", {}),
         "advisor": debug.get("advisor", {}),
         "config": debug.get("config", {}),
+        "scope_doc_count": scope_doc_count,
     }
 
 
@@ -190,7 +192,9 @@ def _render_meta_footer(meta: dict | None) -> None:
         model_parts.append(f"advisor={advisor['model'].split('/')[-1]}")
     model_parts.append(f"composer={cfg.get('composer_model', '').split('/')[-1]}")
 
-    timing_line = f"合計 {meta['t_total']:.1f}s　" + "　".join(stage_parts)
+    scope_count = meta.get("scope_doc_count")
+    scope_str = f"　📂 検索スコープ: {scope_count}件" if scope_count is not None else ""
+    timing_line = f"合計 {meta['t_total']:.1f}s　" + "　".join(stage_parts) + scope_str
     cost_str = f"≈${total_cost:.4f}" if has_cost else "―"
     model_line = f"{cost_str}　" + " / ".join(model_parts)
     st.caption(timing_line)
@@ -231,6 +235,67 @@ def _finalize_result(question: str, pre: dict, answer: str, cited_ids: list,
 with st.sidebar:
     st.header("⚙️ 設定")
     cfg = st.session_state.config
+
+    # ── 文書スコープ ───────────────────────────────────────────────────────────
+    st.subheader("📂 文書")
+    all_docs = [d for d in load_documents_yaml() if d.get("status") == "active"]
+    all_doc_ids = [d["id"] for d in all_docs]
+
+    # Tag filter
+    all_tags: list[str] = sorted({t for d in all_docs for t in (d.get("tags") or [])})
+    tag_filter: list[str] = []
+    if all_tags:
+        tag_filter = st.multiselect("タグ絞り込み", all_tags, key="doc_tag_filter", label_visibility="collapsed",
+                                    placeholder="タグで絞り込み（空=全表示）")
+
+    filtered_docs = [d for d in all_docs if not tag_filter or any(t in (d.get("tags") or []) for t in tag_filter)]
+
+    # Group by domain
+    domains: dict[str, list] = {}
+    for d in filtered_docs:
+        dom = d.get("domain") or "未分類"
+        domains.setdefault(dom, []).append(d)
+
+    # Determine initial checked state (None = all checked)
+    _cur_sel = cfg.selected_doc_ids  # None=all, list=explicit
+
+    col_a, col_b = st.columns(2)
+    _select_all = col_a.button("全選択", key="doc_sel_all", use_container_width=True)
+    _deselect_all = col_b.button("全解除", key="doc_sel_none", use_container_width=True)
+
+    if _select_all:
+        _cur_sel = None
+    elif _deselect_all:
+        _cur_sel = []
+
+    checked_ids: list[str] = []
+    for dom, dom_docs in domains.items():
+        with st.expander(f"📁 {dom} ({len(dom_docs)})", expanded=True):
+            for d in dom_docs:
+                if _cur_sel is None:
+                    default_val = True
+                else:
+                    default_val = d["id"] in _cur_sel
+                checked = st.checkbox(
+                    d.get("title", d["id"]),
+                    value=default_val,
+                    key=f"doc_chk_{d['id']}",
+                )
+                if checked:
+                    checked_ids.append(d["id"])
+
+    # Normalize: if all docs checked → None (no filter)
+    if set(checked_ids) >= set(all_doc_ids):
+        selected_doc_ids: list | None = None
+    elif not checked_ids:
+        selected_doc_ids = []
+    else:
+        selected_doc_ids = checked_ids
+
+    if not all_docs:
+        st.caption("documents.yaml に登録済み文書がありません")
+
+    st.divider()
 
     # ── 三役モデル構成 ─────────────────────────────────────────────────────────
     st.subheader("三役モデル構成")
@@ -301,6 +366,7 @@ with st.sidebar:
         advisor_trigger_unresolved=advisor_trigger_unresolved,
         advisor_k=advisor_k,
         early_stop_k=early_stop_k,
+        selected_doc_ids=selected_doc_ids,
     )
     if asdict(new_cfg) != asdict(cfg):
         st.session_state.config = new_cfg
@@ -449,6 +515,7 @@ with left:
                         pre["all_chunks"],
                         st.session_state.config,
                         pre.get("advisor_out_of_scope", False),
+                        pre.get("scope_text", ""),
                     )
                     st.write_stream(stream_gen)
 
@@ -464,7 +531,7 @@ with left:
                 result = _finalize_result(
                     question, pre, answer, cited_ids, raw_composer, composer_debug, t_total
                 )
-                meta = _build_meta(result["debug"], t_total)
+                meta = _build_meta(result["debug"], t_total, pre.get("scope_doc_count"))
                 _render_meta_footer(meta)
 
             except Exception as e:
@@ -486,7 +553,7 @@ with left:
                     "planner_output": result.get("planner_output"),
                     "planner_thinking": dbg.get("planner", {}).get("thinking"),
                     "composer_thinking": dbg.get("composer", {}).get("thinking"),
-                    "meta": _build_meta(dbg, result.get("t_total", 0)),
+                    "meta": _build_meta(dbg, result.get("t_total", 0), pre.get("scope_doc_count")),
                 }
             )
 

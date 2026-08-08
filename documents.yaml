@@ -1,6 +1,12 @@
 documents:
-  - doc_slug: denki-setsubi
+  - id: denki-setsubi
+    doc_slug: denki-setsubi
     title: 公共建築工事標準仕様書（電気設備工事編）令和7年版
-    domain: electric
-    source_url: https://www.mlit.go.jp/gobuild/content/001888825.pdf
+    domain: 電気
+    tags: []
+    profile: jouban
+    sha256: bec6ec625375c4f39fd86b13106e407a274b351f0e021788c085ddf13e46cdf4
     pdf_path: "data/raw/公共建築工事標準仕様書（電気設備工事編）令和７年版.pdf"
+    source_url: https://www.mlit.go.jp/gobuild/content/001888825.pdf
+    ingest_at: "2026-08-04"
+    status: active

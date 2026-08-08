@@ -1,7 +1,11 @@
 """
 Chunker: splits arbitrated page text into article-level chunks.
 
-PDF structure:
+Profiles:
+  jouban  — 条番号型（公共建築工事標準仕様書など）。X.Y.Z 条番号を階層の起点とする。
+  generic — 汎用型。見出し行またはページ境界を起点とするシンプル分割。
+
+PDF structure (jouban):
   第N編 > 第M章 > 第K節 > X.Y.Z 条名
     (1) 項
       (ｱ) 号
@@ -254,9 +258,136 @@ def chunk_pages(pages: list[dict], doc_slug: str = "spec", domain: str = "") -> 
     return final_chunks
 
 
+def chunk_generic(
+    pages: list[dict],
+    doc_slug: str = "doc",
+    domain: str = "",
+    tags: list[str] | None = None,
+    target_chars: int = 800,
+) -> list[dict]:
+    """
+    汎用チャンカー。見出し行（短い行）またはtarget_chars文字に達したら区切る。
+    条番号パターンを前提としない。
+    """
+    _HEADING_RE = re.compile(r"^[第\d\s【\[（(].{0,30}[章節項編:：]")
+    _SHORT_LINE_THRESHOLD = 40  # これ以下の行を見出し候補とする
+
+    tags_list = tags or []
+    chunks: list[dict] = []
+    counter = 0
+
+    current_heading = ""
+    current_lines: list[str] = []
+    current_pages: list[int] = []
+
+    def flush():
+        nonlocal counter
+        body = "\n".join(current_lines).strip()
+        if not body:
+            return
+        counter += 1
+        chunk_id = f"{doc_slug}-{counter:04d}"
+        pages_str = (
+            f"{min(current_pages)}-{max(current_pages)}"
+            if len(current_pages) > 1
+            else str(current_pages[0]) if current_pages else "0"
+        )
+        chunks.append({
+            "chunk_id": chunk_id,
+            "doc_type": "generic",
+            "domain": domain,
+            "tags": tags_list,
+            "hierarchy": current_heading or f"chunk-{counter}",
+            "heading": current_heading or f"(chunk {counter})",
+            "body": body,
+            "pages": pages_str,
+            "char_count": len(body),
+            "source_engine": "generic",
+            "refs": [],
+        })
+
+    for page_dict in pages:
+        page_no = page_dict["page"]
+        text = page_dict.get("text", "")
+        for raw_line in text.splitlines():
+            line = raw_line.strip()
+            if not line:
+                current_lines.append("")
+                continue
+            is_heading = (
+                _HEADING_RE.match(line) or len(line) <= _SHORT_LINE_THRESHOLD
+            ) and not current_lines
+
+            if is_heading and current_lines:
+                flush()
+                current_heading = line
+                current_lines = []
+                current_pages = [page_no]
+            else:
+                if not current_pages:
+                    current_pages = [page_no]
+                if page_no not in current_pages:
+                    current_pages.append(page_no)
+                current_lines.append(raw_line)
+                if sum(len(l) for l in current_lines) >= target_chars:
+                    flush()
+                    current_heading = ""
+                    current_lines = []
+                    current_pages = []
+    flush()
+
+    logger.info("generic chunker: %d chunks for %s", len(chunks), doc_slug)
+    return chunks
+
+
+# 条番号パターンの密度で jouban/generic を判定するしきい値
+_JOUBAN_DENSITY_THRESHOLD = 0.015  # 全文字数に対する条番号マッチ数の割合
+
+
+def detect_profile(pages: list[dict]) -> str:
+    """
+    先頭10ページのテキストから条番号密度を測定し、jouban/generic を返す。
+    """
+    sample = pages[:10]
+    total_chars = 0
+    article_hits = 0
+    for p in sample:
+        text = p.get("text", "")
+        total_chars += len(text)
+        article_hits += len(_ARTICLE_RE.findall(text))
+    if total_chars == 0:
+        return "generic"
+    density = article_hits / total_chars
+    profile = "jouban" if density >= _JOUBAN_DENSITY_THRESHOLD else "generic"
+    logger.info("detect_profile: density=%.5f → %s", density, profile)
+    return profile
+
+
+def chunk_by_profile(
+    pages: list[dict],
+    doc_slug: str,
+    domain: str,
+    profile: str,
+    tags: list[str] | None = None,
+) -> list[dict]:
+    """Profile-aware dispatcher."""
+    if profile == "jouban":
+        return chunk_pages(pages, doc_slug=doc_slug, domain=domain)
+    return chunk_generic(pages, doc_slug=doc_slug, domain=domain, tags=tags)
+
+
 def write_jsonl(chunks: list[dict], path: str | Path) -> None:
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         for chunk in chunks:
             f.write(json.dumps(chunk, ensure_ascii=False) + "\n")
     logger.info("chunker: wrote %d chunks to %s", len(chunks), path)
+
+
+def append_jsonl(chunks: list[dict], path: str | Path) -> None:
+    """Append chunks to an existing JSONL file."""
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a", encoding="utf-8") as f:
+        for chunk in chunks:
+            f.write(json.dumps(chunk, ensure_ascii=False) + "\n")
+    logger.info("chunker: appended %d chunks to %s", len(chunks), path)

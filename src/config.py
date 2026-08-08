@@ -1,9 +1,19 @@
 """Agent configuration: dataclass, persistence, presets."""
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 import json
 from pathlib import Path
 
-APP_VERSION = "0.4.0"
+DOCUMENTS_YAML = Path("documents.yaml")
+
+
+def load_documents_yaml() -> list[dict]:
+    import yaml
+    if not DOCUMENTS_YAML.exists():
+        return []
+    with open(DOCUMENTS_YAML, encoding="utf-8") as f:
+        return yaml.safe_load(f).get("documents", [])
+
+APP_VERSION = "0.4.5"
 
 # chat-pwa 準拠のモデルプリセット（M4）
 PRESETS = [
@@ -69,6 +79,8 @@ class AgentConfig:
     advisor_trigger_unresolved: bool = False
     advisor_k: int = 2        # 難航検知: 連続空振りループ数
     early_stop_k: int = 3     # 早期打ち切り: 連続空振りループ数
+    # M4.5: 文書スコープ（None = 全文書対象、[] = 全除外）
+    selected_doc_ids: list | None = None
 
 
 def load_config() -> AgentConfig:

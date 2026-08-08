@@ -16,7 +16,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 
-from src.config import AgentConfig, APP_VERSION
+from src.config import AgentConfig, APP_VERSION, load_documents_yaml
 from src.llm import make_client
 from src.tools import TOOLS, read_section, search_chunks
 
@@ -24,9 +24,30 @@ logger = logging.getLogger(__name__)
 
 # ── System prompts ────────────────────────────────────────────────────────────
 
-_PLANNER_SYSTEM = """\
-あなたは公共建築工事標準仕様書（電気設備工事編）の検索計画専門家です。
+def _build_scope_docs_text(config: "AgentConfig") -> str:
+    """Build scope document list text from documents.yaml for system prompts."""
+    docs = load_documents_yaml()
+    if config.selected_doc_ids is not None:
+        docs = [d for d in docs if d.get("id") in config.selected_doc_ids]
+    if not docs:
+        return "現在のスコープ内文書: （なし — 全文書が除外されています）"
+    lines = ["現在のスコープ内文書（検索対象）:"]
+    for d in docs:
+        tags_str = "・".join(d.get("tags") or [])
+        tag_part = f" [{tags_str}]" if tags_str else ""
+        lines.append(
+            f"- {d.get('title', d['id'])} "
+            f"(domain: {d.get('domain', '')}{tag_part}, doc_id: {d['id']})"
+        )
+    return "\n".join(lines)
+
+
+def _build_planner_system(scope_text: str) -> str:
+    return f"""\
+あなたは建築工事仕様書の検索計画専門家です。
 質問を分析し、仕様書から回答を見つけるための検索計画を立ててください。
+
+{scope_text}
 
 出力（プレーンテキスト）:
 質問タイプ: [可否確認/数値確認/手順確認/比較確認/オープン/その他]
@@ -36,25 +57,28 @@ _PLANNER_SYSTEM = """\
 クエリ3: [必要なら]
 advisor_recommended: [true/false — 質問が広範囲・守備範囲不明・曖昧な場合はtrue]
 
-重要: 可否確認の場合は個別言及より規定表・一覧表（使用可能材料を列挙したもの）の特定を優先。\
-"""
+重要: 可否確認の場合は個別言及より規定表・一覧表（使用可能材料を列挙したもの）の特定を優先。"""
 
-_LOOP_SYSTEM_TEMPLATE = """\
-あなたは公共建築工事標準仕様書（電気設備工事編）の条文収集アシスタントです。
+
+def _build_loop_system(plan_section: str, scope_text: str) -> str:
+    return f"""\
+あなたは建築工事仕様書の条文収集アシスタントです。
 ツールを使って質問の回答に必要な条文テキストを収集してください。
+
+{scope_text}
 
 {plan_section}収集ルール:
 - 回答に直接関係する条文を取得すること
 - refsに参照先がある場合、必要であればread_sectionで精読すること
 - 権威ソース（規定表・一覧）を優先すること
-- 素材収集が完了したらツール呼び出しを終了すること（回答は不要）\
-"""
+- 素材収集が完了したらツール呼び出しを終了すること（回答は不要）"""
 
-_COMPOSER_SYSTEM_TEMPLATE = """\
-あなたは公共建築工事標準仕様書（電気設備工事編）の回答生成専門家です。
 
-本システムが保有する文書:
-- 公共建築工事標準仕様書（電気設備工事編）令和7年版（doc_slug: denki-setsubi）
+def _build_composer_system(style_instruction: str, scope_text: str) -> str:
+    return f"""\
+あなたは建築工事仕様書の回答生成専門家です。
+
+{scope_text}
 
 {style_instruction}
 
@@ -62,7 +86,7 @@ _COMPOSER_SYSTEM_TEMPLATE = """\
 - 提供された条文素材に明確な根拠がある場合のみ断定的に回答すること
 - 素材に根拠がない場合は「根拠不足」と明記し、もっともらしい条番号で穴を埋めないこと
 - 可否を問う質問は権威ソース（規定表・一覧表）を引用できた場合のみ断定すること
-- 質問が本システムの保有文書の守備範囲外の場合（内線規程・電技解釈等）は、
+- 質問がスコープ内文書の守備範囲外の場合（内線規程・電技解釈等）は、
   その旨を明記して「本文書には該当規定が見当たらない」と回答すること
 - 質問の前提が誤り（「AはよくBはダメ」といった規定が存在しない）場合は前提を訂正すること
 
@@ -71,8 +95,7 @@ _COMPOSER_SYSTEM_TEMPLATE = """\
 次に必ず以下の区切り行を置き、引用IDのみをJSONで続けること。
 
 <!-- CITATIONS -->
-{{"cited_chunk_ids": ["chunk_id_1", "chunk_id_2"]}}\
-"""
+{{"cited_chunk_ids": ["chunk_id_1", "chunk_id_2"]}}"""
 
 _ADVISOR_SYSTEM = """\
 あなたは公共建築工事標準仕様書（電気設備工事編）の検索アドバイザーです。
@@ -123,25 +146,26 @@ def _parse_advisor_recommended(plan_text: str) -> bool:
     return m.group(1).lower() == "true" if m else False
 
 
-def _dispatch(name: str, input_: dict, top_k_default: int) -> object:
+def _dispatch(name: str, input_: dict, top_k_default: int, doc_ids: list | None = None) -> object:
     if name == "search_chunks":
         if "top_k" not in input_:
             input_ = {**input_, "top_k": top_k_default}
-        return search_chunks(**input_)
+        return search_chunks(**input_, doc_ids=doc_ids)
     if name == "read_section":
         return read_section(**input_)
     return f"[不明なツール: {name}]"
 
 
-def _cached_search(inp: dict, top_k_default: int, cache: dict) -> list:
+def _cached_search(inp: dict, top_k_default: int, cache: dict, doc_ids: list | None = None) -> list:
     query = inp.get("query", "")
     k = inp.get("top_k", top_k_default)
-    key = (query, k)
+    doc_ids_key = tuple(sorted(doc_ids)) if doc_ids else None
+    key = (query, k, doc_ids_key)
     if key in cache:
         return cache[key]
     if "top_k" not in inp:
         inp = {**inp, "top_k": top_k_default}
-    result = search_chunks(**inp)
+    result = search_chunks(**inp, doc_ids=doc_ids)
     cache[key] = result
     return result
 
@@ -201,11 +225,12 @@ def _summarize_trace(trace: list) -> str:
 
 # ── Three roles + Advisor ─────────────────────────────────────────────────────
 
-def _run_planner(question: str, config: AgentConfig) -> tuple:
+def _run_planner(question: str, config: AgentConfig, scope_text: str = "") -> tuple:
     """Returns (plan_text, debug)."""
     t0 = time.perf_counter()
     client = make_client(config.planner_model)
-    resp = client.chat([{"role": "user", "text": question}], [], _PLANNER_SYSTEM)
+    system = _build_planner_system(scope_text)
+    resp = client.chat([{"role": "user", "text": question}], [], system)
     elapsed = time.perf_counter() - t0
     return resp.text or "", {
         "model": config.planner_model,
@@ -262,6 +287,7 @@ def _run_loop(
     plan: str | None,
     config: AgentConfig,
     advisor_state: dict,
+    scope_text: str = "",
 ) -> tuple:
     """
     Returns (trace, all_chunks, retrieved, debug, max_loops_hit, early_stop).
@@ -269,12 +295,13 @@ def _run_loop(
     """
     t0 = time.perf_counter()
     total_usage = {"input_tokens": 0, "output_tokens": 0}
+    doc_ids = config.selected_doc_ids  # None = all, [] = none, list = filter
 
     plan_section = (
         f"検索計画（プランナーより）:\n{plan}\n\n上記の計画に従って素材を収集してください。\n"
         if plan else ""
     )
-    system = _LOOP_SYSTEM_TEMPLATE.format(plan_section=plan_section)
+    system = _build_loop_system(plan_section, scope_text)
     client = make_client(config.loop_model)
 
     messages = [{"role": "user", "text": question}]
@@ -310,7 +337,7 @@ def _run_loop(
         if len(search_tcs) > 1:
             with ThreadPoolExecutor(max_workers=len(search_tcs)) as ex:
                 future_to_tc = {
-                    ex.submit(_cached_search, tc.input, config.top_k, query_cache): tc
+                    ex.submit(_cached_search, tc.input, config.top_k, query_cache, doc_ids): tc
                     for tc in search_tcs
                 }
                 for future in as_completed(future_to_tc):
@@ -318,7 +345,7 @@ def _run_loop(
                     tc_results[tc.id] = future.result()
         elif search_tcs:
             tc = search_tcs[0]
-            tc_results[tc.id] = _cached_search(tc.input, config.top_k, query_cache)
+            tc_results[tc.id] = _cached_search(tc.input, config.top_k, query_cache, doc_ids)
 
         for tc in other_tcs:
             tc_results[tc.id] = _dispatch(tc.name, tc.input, config.top_k)
@@ -436,14 +463,15 @@ def _run_loop(
 
 
 def _run_composer(
-    question: str, all_chunks: list, config: AgentConfig, advisor_out_of_scope: bool = False
+    question: str, all_chunks: list, config: AgentConfig,
+    advisor_out_of_scope: bool = False, scope_text: str = "",
 ) -> tuple:
     """Returns (answer, cited_chunk_ids, raw_output, debug)."""
     t0 = time.perf_counter()
     client = make_client(config.composer_model)
 
     style_instr = _STYLE_INSTRUCTIONS.get(config.answer_style, _STYLE_INSTRUCTIONS["standard"])
-    system = _COMPOSER_SYSTEM_TEMPLATE.format(style_instruction=style_instr)
+    system = _build_composer_system(style_instr, scope_text)
 
     chunks_text = _format_chunks_for_composer(all_chunks) if all_chunks else "（検索結果なし）"
     if advisor_out_of_scope:
@@ -482,6 +510,7 @@ def make_composer_stream(
     all_chunks: list,
     config: AgentConfig,
     advisor_out_of_scope: bool = False,
+    scope_text: str = "",
 ):
     """
     Returns (display_generator, get_result_fn).
@@ -492,7 +521,7 @@ def make_composer_stream(
     client = make_client(config.composer_model)
 
     style_instr = _STYLE_INSTRUCTIONS.get(config.answer_style, _STYLE_INSTRUCTIONS["standard"])
-    system = _COMPOSER_SYSTEM_TEMPLATE.format(style_instruction=style_instr)
+    system = _build_composer_system(style_instr, scope_text)
 
     chunks_text = _format_chunks_for_composer(all_chunks) if all_chunks else "（検索結果なし）"
     if advisor_out_of_scope:
@@ -567,13 +596,14 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
     if config is None:
         config = AgentConfig()
 
+    scope_text = _build_scope_docs_text(config)
     planner_output: str | None = None
     planner_debug: dict = {}
     advisor_recommended = False
 
     # ── Planner ───────────────────────────────────────────────────────────────
     if config.planner_enabled:
-        planner_output, planner_debug = _run_planner(question, config)
+        planner_output, planner_debug = _run_planner(question, config, scope_text)
         advisor_recommended = _parse_advisor_recommended(planner_output or "")
         logger.info("planner: %s", (planner_output or "")[:200])
 
@@ -614,7 +644,7 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
     # ── Execution loop ────────────────────────────────────────────────────────
     if not pre_loop_skip:
         trace, all_chunks, retrieved, loop_debug, max_loops_hit, early_stop = _run_loop(
-            question, effective_plan, config, advisor_state
+            question, effective_plan, config, advisor_state, scope_text
         )
     else:
         trace, all_chunks, retrieved = [], [], []
@@ -656,6 +686,9 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
         "all_chunks": all_chunks,
         "advisor_out_of_scope": advisor_out_of_scope,
         "advisor_state": advisor_state,
+        "scope_text": scope_text,
+        "scope_doc_count": len(load_documents_yaml()) if config.selected_doc_ids is None
+            else len([d for d in load_documents_yaml() if d.get("id") in (config.selected_doc_ids or [])]),
         "debug_partial": {
             "app_version": APP_VERSION,
             "config": asdict(config),
@@ -682,7 +715,7 @@ def run(question: str, config: AgentConfig | None = None) -> dict:
     pre = run_pre_composer(question, config)
 
     answer, cited_ids, raw_composer, composer_debug = _run_composer(
-        question, pre["all_chunks"], config, pre["advisor_out_of_scope"]
+        question, pre["all_chunks"], config, pre["advisor_out_of_scope"], pre.get("scope_text", "")
     )
 
     # Citation verification

@@ -281,6 +281,7 @@ def _run_loop(
     max_loops_hit = True
     early_stop = False
     consecutive_empty = 0
+    total_search_calls = 0
 
     any_trigger_active = (
         config.advisor_trigger_stall
@@ -342,6 +343,7 @@ def _run_loop(
 
         # Track stall
         had_search = bool(search_tcs)
+        total_search_calls += len(search_tcs)
         if had_search and new_in_this_loop == 0:
             consecutive_empty += 1
         elif new_in_this_loop > 0:
@@ -352,7 +354,9 @@ def _run_loop(
             "thinking": response.thinking,
             "tool_calls": tool_call_records,
         })
-        logger.info("loop %d: %s", loop_num + 1, [tc.name for tc in response.tool_calls])
+        logger.info("loop %d: %s  (total_search_calls=%d, consecutive_empty=%d)",
+                    loop_num + 1, [tc.name for tc in response.tool_calls],
+                    total_search_calls, consecutive_empty)
 
         messages.append({
             "role": "assistant",
@@ -366,12 +370,12 @@ def _run_loop(
 
         # ── Mid-loop advisor: 難航検知 ─────────────────────────────────────────
         stall_threshold = config.advisor_k
-        half_loops = config.max_loops / 2
+        search_budget = int(config.max_loops * 0.6)
+        stall_hit = (consecutive_empty >= stall_threshold) or (total_search_calls >= search_budget)
         if (
             not advisor_state["fired"]
             and config.advisor_trigger_stall
-            and consecutive_empty >= stall_threshold
-            and loop_num + 1 > half_loops
+            and stall_hit
         ):
             logger.info("advisor firing: stall detected at loop %d", loop_num + 1)
             adv_result, adv_debug = _run_advisor(question, plan, trace, all_chunks, config)

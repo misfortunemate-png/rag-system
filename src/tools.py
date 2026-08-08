@@ -5,6 +5,7 @@ TOOLS: provider-agnostic tool definitions for passing to LLM adapters.
 """
 import json
 import logging
+import threading
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -69,25 +70,39 @@ TOOLS = [
 
 
 _embed_model = None
+_chroma_client = None
+_chroma_col = None
+_init_lock = threading.Lock()
 
 
 def _get_embed_model():
     global _embed_model
     if _embed_model is None:
-        from sentence_transformers import SentenceTransformer
+        with _init_lock:
+            if _embed_model is None:
+                from sentence_transformers import SentenceTransformer
 
-        _embed_model = SentenceTransformer(MODEL_NAME)
+                _embed_model = SentenceTransformer(MODEL_NAME)
     return _embed_model
+
+
+def _get_chroma_col():
+    global _chroma_client, _chroma_col
+    if _chroma_col is None:
+        with _init_lock:
+            if _chroma_col is None:
+                import chromadb
+
+                _chroma_client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+                _chroma_col = _chroma_client.get_collection(COLLECTION_NAME)
+    return _chroma_col
 
 
 def search_chunks(query: str, domain: str | None = None, top_k: int = 3) -> list[dict]:
     model = _get_embed_model()
     vec = model.encode([QUERY_PREFIX + query], normalize_embeddings=True).tolist()[0]
 
-    import chromadb
-
-    client = chromadb.PersistentClient(path=str(CHROMA_DIR))
-    col = client.get_collection(COLLECTION_NAME)
+    col = _get_chroma_col()
 
     where = {"domain": domain} if domain else None
     results = col.query(

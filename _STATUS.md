@@ -1,8 +1,8 @@
 ---
-version: "M5"
-badge: "M4.5完了 → M5仕様策定中"
-next: "M5要件定義・指示書起草（ハイブリッド検索・内線規程ingest）"
-waiting_on: pm
+version: "M5c"
+badge: "M5c MCPサーバー化 発令待ち"
+next: "M5c発令→実装（stdio MCP・三層ツール・ジョブ方式・コスト記帳）"
+waiting_on: owner
 ---
 
 # rag-system 現在地
@@ -11,14 +11,16 @@ waiting_on: pm
 
 ## 状態
 
-- M1〜M4.5 完了。文書投入基盤（受信箱intake・文書スコープ選択・チャンクプロファイル・遡及マイグレーション）検分合格
-- M5（マルチ文書化・ハイブリッド検索・文書横断検証拡充）の仕様策定に入る
+- M1〜M4.5 完了（M4.5検分合格 2026-08-08）
+- M5はa/b/cに再構成（roadmap v1.1）。M5c（ローカルMCP）を先行、指示書発行済み
+  （docs/instructions/m5c-instructions.md）。発注者の発令待ち
 
 ## 直近の経緯
 
-- M4.5 PG完了報告（docs/reports/m4-5-completion.md）→ PM検分合格（2026-08-08）
-- リポジトリ: misfortunemate-png/rag-system（フラン D:\AI\github\rag-system）
+- M4.5検分合格 → M5再構成の発注者裁定（MCP前倒し・リモート公開は後日）
+- M5a（素材拡充）は内線規程PDF入手待ち。M5b（ハイブリッド検索・検証拡充）はM5c/M5a後
 
 ## 次の見通し
 
-M5（マルチ文書化）: ハイブリッド検索（BM25+密埋め込みRRF融合）、内線規程ingest（素材入手は発注者判断）、文書横断検証拡充。全体は docs/roadmap-v1.md 参照
+M5c実装 → Claude Code/Desktopからの実用テスト → M5a/M5b。リモートMCP（M7b）は
+入り方の安全方針とセットで発注者裁定するまで着手しない

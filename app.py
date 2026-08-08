@@ -92,7 +92,9 @@ def _render_trace_entries(trace: list) -> None:
             reason = step.get("reason", "")
             icon = "🎯"
             label = "守備範囲外裁定" if decision == "out_of_scope" else "再計画裁定"
-            st.markdown(f"**{icon} アドバイザー — {label}**")
+            phase = step.get("loop", "")
+            phase_label = "（プレループ）" if phase == "pre" else "（ポストループ）" if phase == "post" else ""
+            st.markdown(f"**{icon} アドバイザー{phase_label} — {label}**")
             st.caption(f"理由: {reason}")
             new_qs = step.get("new_queries", [])
             if new_qs:

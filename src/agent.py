@@ -580,12 +580,23 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
     fire_pre = config.advisor_trigger_always or (
         config.advisor_trigger_planner and advisor_recommended
     )
+    pre_advisor_trace: dict | None = None
     if fire_pre:
         logger.info("advisor firing: pre-loop (always=%s, planner=%s)", config.advisor_trigger_always, advisor_recommended)
         adv_result, adv_debug = _run_advisor(question, planner_output, [], [], config)
         advisor_state["fired"] = True
         advisor_state["result"] = adv_result
         advisor_state["debug"] = adv_debug
+
+        pre_advisor_trace = {
+            "loop": "pre",
+            "advisor": True,
+            "decision": adv_result.get("decision", ""),
+            "reason": adv_result.get("reason", ""),
+            "new_queries": adv_result.get("new_queries", []),
+            "tool_calls": [],
+            "thinking": None,
+        }
 
         if adv_result.get("decision") == "out_of_scope":
             pre_loop_skip = True
@@ -605,6 +616,10 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
         loop_debug = {"model": config.loop_model, "usage": {}, "time_s": 0.0, "loops": 0, "max_loops_hit": False, "early_stop": False}
         max_loops_hit = False
         early_stop = False
+
+    # Prepend pre-loop advisor entry so it appears first in the trace UI
+    if pre_advisor_trace is not None:
+        trace = [pre_advisor_trace] + trace
 
     # ── Post-loop advisor: 未決着 ─────────────────────────────────────────────
     if not advisor_state["fired"] and config.advisor_trigger_unresolved and max_loops_hit:

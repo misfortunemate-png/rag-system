@@ -9,3 +9,5 @@ build/
 venv/
 settings.json
 data/chroma/
+logs/*.log
+data/feedback/inbox.jsonl

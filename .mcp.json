@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "rag-system": {
+      "type": "stdio",
+      "command": "D:\\AI\\github\\rag-system\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "src.mcp_server"],
+      "cwd": "D:\\AI\\github\\rag-system"
+    }
+  }
+}

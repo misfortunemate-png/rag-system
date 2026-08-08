@@ -273,7 +273,7 @@ with st.sidebar:
     if advisor_trigger_stall:
         advisor_k = st.slider(
             "難航検知 k（連続空振りループ数）", 1, 5, cfg.advisor_k,
-            help="直近kループ連続で新規チャンク獲得ゼロ かつ ループ数 > MAX_LOOPS/2 で発動"
+            help="即時型: 直近kループ連続で新規チャンク獲得ゼロ / 予算型: 探索コール総数 >= 0.6×MAX_LOOPS のいずれかで発動"
         )
     else:
         advisor_k = cfg.advisor_k

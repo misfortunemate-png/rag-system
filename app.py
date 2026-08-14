@@ -482,6 +482,49 @@ with left:
             st.markdown(item["answer"])
             _render_meta_footer(item.get("meta"))
 
+    # ── Domain selection (R-9) ───────────────────────────────────────────────
+    _DOMAIN_OPTIONS = [
+        ("建築", "建築"),
+        ("電気", "電気"),
+        ("機械", "機械"),
+        ("設計", "設計"),
+        ("消防", "消防"),
+        ("塗装", "塗装"),
+        ("衛生", "衛生"),
+        ("その他", ""),
+        ("法令", "法令"),
+    ]
+    with st.expander("🔍 検索対象の分野を選択", expanded=False):
+        dom_cols = st.columns(3)
+        _dom_selected: list[str] = []
+        for idx, (label, value) in enumerate(_DOMAIN_OPTIONS):
+            col = dom_cols[idx % 3]
+            checked = col.checkbox(
+                label,
+                value=True,
+                key=f"domain_chk_{label}",
+            )
+            if checked:
+                _dom_selected.append(value)
+
+        # All selected → None (no filter)
+        all_values = [v for _, v in _DOMAIN_OPTIONS]
+        if set(_dom_selected) >= set(all_values):
+            selected_domains: list[str] | None = None
+        elif not _dom_selected:
+            selected_domains = []
+        else:
+            selected_domains = _dom_selected
+
+    # Update config with domain selection
+    if cfg.selected_domains != selected_domains:
+        new_cfg_with_domains = AgentConfig(**{
+            **asdict(cfg),
+            "selected_domains": selected_domains,
+        })
+        st.session_state.config = new_cfg_with_domains
+        cfg = new_cfg_with_domains
+
     # Pending question from sidebar eval buttons
     pending = st.session_state.pop("pending_question", None)
     chat_input = st.chat_input("条文について質問してください...")
@@ -505,6 +548,16 @@ with left:
                         planner_thinking = pre["debug_partial"]["planner"].get("thinking")
                         _render_thinking(planner_thinking)
                         st.text(pre["planner_output"])
+
+                    # Domain filter trace (R-10)
+                    df = pre.get("domain_filter")
+                    if df:
+                        user_sel = "、".join(df["user_selected"]) if df["user_selected"] else "全分野"
+                        effective = "、".join(df["effective"]) if df["effective"] else "全分野"
+                        if df["planner_narrowed"] is not None:
+                            st.caption(f"🏷 分野絞り込み: {user_sel} → {effective}")
+                        else:
+                            st.caption(f"🏷 検索対象: {user_sel}")
 
                     _render_trace_entries(pre["trace"])
 

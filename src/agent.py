@@ -42,13 +42,25 @@ def _build_scope_docs_text(config: "AgentConfig") -> str:
     return "\n".join(lines)
 
 
-def _build_planner_system(scope_text: str) -> str:
+def _build_planner_system(scope_text: str, user_domains: list[str] | None = None) -> str:
+    domain_section = ""
+    if user_domains is not None:
+        domain_list = "、".join(user_domains) if user_domains else "（なし）"
+        domain_section = f"""
+ユーザーが選択した検索対象分野: {domain_list}
+
+質問内容から、上記の中で実際に関連する分野を判断してください。
+回答の「relevant_domains」に関連分野のリストを返してください。
+判断できない場合は、ユーザーが選択した全分野をそのまま返してください。
+ユーザーが選択した範囲を広げてはいけません（絞る方向のみ）。
+"""
+
     return f"""\
 あなたは建築工事仕様書の検索計画専門家です。
 質問を分析し、仕様書から回答を見つけるための検索計画を立ててください。
 
 {scope_text}
-
+{domain_section}
 出力（プレーンテキスト）:
 質問タイプ: [可否確認/数値確認/手順確認/比較確認/オープン/その他]
 ターゲット: [答えが記載されているであろう表・条番号（例: 表1.1.1「電線類」、2.2.3）]
@@ -56,6 +68,7 @@ def _build_planner_system(scope_text: str) -> str:
 クエリ2: [必要なら]
 クエリ3: [必要なら]
 advisor_recommended: [true/false — 質問が広範囲・守備範囲不明・曖昧な場合はtrue]
+relevant_domains: [関連する分野のJSONリスト（例: ["電気", "消防"]）]
 
 重要: 可否確認の場合は個別言及より規定表・一覧表（使用可能材料を列挙したもの）の特定を優先。"""
 
@@ -146,26 +159,47 @@ def _parse_advisor_recommended(plan_text: str) -> bool:
     return m.group(1).lower() == "true" if m else False
 
 
-def _dispatch(name: str, input_: dict, top_k_default: int, doc_ids: list | None = None) -> object:
+def _parse_relevant_domains(plan_text: str) -> list[str] | None:
+    """Extract relevant_domains JSON list from planner output. Returns None on failure."""
+    m = re.search(r"relevant_domains:\s*(\[.*?\])", plan_text)
+    if not m:
+        return None
+    try:
+        domains = json.loads(m.group(1))
+        if isinstance(domains, list) and all(isinstance(d, str) for d in domains):
+            return domains
+    except Exception:
+        pass
+    return None
+
+
+def _dispatch(
+    name: str, input_: dict, top_k_default: int,
+    doc_ids: list | None = None, domains: list[str] | None = None,
+) -> object:
     if name == "search_chunks":
         if "top_k" not in input_:
             input_ = {**input_, "top_k": top_k_default}
-        return search_chunks(**input_, doc_ids=doc_ids)
+        return search_chunks(**input_, doc_ids=doc_ids, domains=domains)
     if name == "read_section":
         return read_section(**input_)
     return f"[不明なツール: {name}]"
 
 
-def _cached_search(inp: dict, top_k_default: int, cache: dict, doc_ids: list | None = None) -> list:
+def _cached_search(
+    inp: dict, top_k_default: int, cache: dict,
+    doc_ids: list | None = None, domains: list[str] | None = None,
+) -> list:
     query = inp.get("query", "")
     k = inp.get("top_k", top_k_default)
     doc_ids_key = tuple(sorted(doc_ids)) if doc_ids else None
-    key = (query, k, doc_ids_key)
+    domains_key = tuple(sorted(domains)) if domains else None
+    key = (query, k, doc_ids_key, domains_key)
     if key in cache:
         return cache[key]
     if "top_k" not in inp:
         inp = {**inp, "top_k": top_k_default}
-    result = search_chunks(**inp, doc_ids=doc_ids)
+    result = search_chunks(**inp, doc_ids=doc_ids, domains=domains)
     cache[key] = result
     return result
 
@@ -225,11 +259,14 @@ def _summarize_trace(trace: list) -> str:
 
 # ── Three roles + Advisor ─────────────────────────────────────────────────────
 
-def _run_planner(question: str, config: AgentConfig, scope_text: str = "") -> tuple:
+def _run_planner(
+    question: str, config: AgentConfig,
+    scope_text: str = "", user_domains: list[str] | None = None,
+) -> tuple:
     """Returns (plan_text, debug)."""
     t0 = time.perf_counter()
     client = make_client(config.planner_model)
-    system = _build_planner_system(scope_text)
+    system = _build_planner_system(scope_text, user_domains)
     resp = client.chat([{"role": "user", "text": question}], [], system)
     elapsed = time.perf_counter() - t0
     return resp.text or "", {
@@ -288,6 +325,7 @@ def _run_loop(
     config: AgentConfig,
     advisor_state: dict,
     scope_text: str = "",
+    domains: list[str] | None = None,
 ) -> tuple:
     """
     Returns (trace, all_chunks, retrieved, debug, max_loops_hit, early_stop).
@@ -337,7 +375,7 @@ def _run_loop(
         if len(search_tcs) > 1:
             with ThreadPoolExecutor(max_workers=len(search_tcs)) as ex:
                 future_to_tc = {
-                    ex.submit(_cached_search, tc.input, config.top_k, query_cache, doc_ids): tc
+                    ex.submit(_cached_search, tc.input, config.top_k, query_cache, doc_ids, domains): tc
                     for tc in search_tcs
                 }
                 for future in as_completed(future_to_tc):
@@ -345,10 +383,10 @@ def _run_loop(
                     tc_results[tc.id] = future.result()
         elif search_tcs:
             tc = search_tcs[0]
-            tc_results[tc.id] = _cached_search(tc.input, config.top_k, query_cache, doc_ids)
+            tc_results[tc.id] = _cached_search(tc.input, config.top_k, query_cache, doc_ids, domains)
 
         for tc in other_tcs:
-            tc_results[tc.id] = _dispatch(tc.name, tc.input, config.top_k)
+            tc_results[tc.id] = _dispatch(tc.name, tc.input, config.top_k, doc_ids, domains)
 
         # ── Collect results in original order ─────────────────────────────────
         tool_call_records = []
@@ -601,11 +639,25 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
     planner_debug: dict = {}
     advisor_recommended = False
 
+    user_domains = config.selected_domains  # None = all
+
     # ── Planner ───────────────────────────────────────────────────────────────
     if config.planner_enabled:
-        planner_output, planner_debug = _run_planner(question, config, scope_text)
+        planner_output, planner_debug = _run_planner(question, config, scope_text, user_domains)
         advisor_recommended = _parse_advisor_recommended(planner_output or "")
         logger.info("planner: %s", (planner_output or "")[:200])
+
+    # ── Domain narrowing (R-10) ──────────────────────────────────────────────
+    effective_domains = user_domains
+    planner_domains: list[str] | None = None
+    if planner_output and user_domains is not None:
+        planner_domains = _parse_relevant_domains(planner_output)
+        if planner_domains is not None:
+            effective_domains = [d for d in planner_domains if d in user_domains]
+            if not effective_domains:
+                effective_domains = user_domains
+            logger.info("domain_filter: user=%s, planner=%s, effective=%s",
+                        user_domains, planner_domains, effective_domains)
 
     # ── Pre-loop advisor: 常時 / プランナー裁量 ───────────────────────────────
     advisor_state = {"fired": False, "result": None, "debug": {}}
@@ -644,7 +696,7 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
     # ── Execution loop ────────────────────────────────────────────────────────
     if not pre_loop_skip:
         trace, all_chunks, retrieved, loop_debug, max_loops_hit, early_stop = _run_loop(
-            question, effective_plan, config, advisor_state, scope_text
+            question, effective_plan, config, advisor_state, scope_text, effective_domains
         )
     else:
         trace, all_chunks, retrieved = [], [], []
@@ -678,6 +730,16 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
         and advisor_state["result"].get("decision") == "out_of_scope"
     )
 
+    # Domain filter trace
+    domain_filter_trace = None
+    if user_domains is not None:
+        domain_filter_trace = {
+            "action": "domain_filter",
+            "user_selected": user_domains,
+            "planner_narrowed": planner_domains,
+            "effective": effective_domains,
+        }
+
     return {
         "question": question,
         "planner_output": planner_output,
@@ -689,6 +751,7 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
         "scope_text": scope_text,
         "scope_doc_count": len(load_documents_yaml()) if config.selected_doc_ids is None
             else len([d for d in load_documents_yaml() if d.get("id") in (config.selected_doc_ids or [])]),
+        "domain_filter": domain_filter_trace,
         "debug_partial": {
             "app_version": APP_VERSION,
             "config": asdict(config),

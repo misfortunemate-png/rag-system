@@ -13,7 +13,7 @@ def load_documents_yaml() -> list[dict]:
     with open(DOCUMENTS_YAML, encoding="utf-8") as f:
         return yaml.safe_load(f).get("documents", [])
 
-APP_VERSION = "0.4.5"
+APP_VERSION = "0.5.0"
 
 # chat-pwa 準拠のモデルプリセット（M4）
 PRESETS = [
@@ -81,6 +81,8 @@ class AgentConfig:
     early_stop_k: int = 3     # 早期打ち切り: 連続空振りループ数
     # M4.5: 文書スコープ（None = 全文書対象、[] = 全除外）
     selected_doc_ids: list | None = None
+    # M5b: domain検索フィルタ（None = 全domain対象）
+    selected_domains: list | None = None
 
 
 def load_config() -> AgentConfig:

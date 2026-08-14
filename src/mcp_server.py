@@ -107,7 +107,7 @@ def _job_mark_done(job_id: str) -> None:
 # ── Background worker ─────────────────────────────────────────────────────────
 
 
-def _run_job(job_id: str, question: str, style: str) -> None:
+def _run_job(job_id: str, question: str, style: str, domains: list[str] | None = None) -> None:
     global _pending_count
 
     _exec_semaphore.acquire()
@@ -120,8 +120,10 @@ def _run_job(job_id: str, question: str, style: str) -> None:
 
         config = load_config()
         config.answer_style = style
+        if domains is not None:
+            config.selected_domains = domains
 
-        _log("job_submitted", job_id=job_id, question=question[:200], style=style)
+        _log("job_submitted", job_id=job_id, question=question[:200], style=style, domains=domains)
 
         result = agent_run(question, config)
         elapsed = round(time.perf_counter() - t0, 2)
@@ -221,12 +223,12 @@ def list_documents() -> list:
 
 
 @mcp.tool()
-def search_chunks(query: str, top_k: int = 3) -> list:
-    """条文テキストをベクトル検索し関連チャンクを返す。settings.jsonのselected_doc_idsスコープを適用する。"""
+def search_chunks(query: str, top_k: int = 5, domains: list[str] | None = None) -> list:
+    """条文テキストをハイブリッド検索（密ベクトル＋BM25＋リランキング）し関連チャンクを返す。domainsで検索対象分野を指定可能（例: ["消防","法令"]）。"""
     from src.tools import search_chunks as _search
     from src.config import load_config
     config = load_config()
-    return _search(query=query, top_k=top_k, doc_ids=config.selected_doc_ids)
+    return _search(query=query, top_k=top_k, doc_ids=config.selected_doc_ids, domains=domains)
 
 
 @mcp.tool()
@@ -239,10 +241,11 @@ def read_section(doc_slug: str, hierarchy: str) -> str:
 
 
 @mcp.tool()
-def submit_question(question: str, style: str = "standard") -> dict:
+def submit_question(question: str, style: str = "standard", domains: list[str] | None = None) -> dict:
     """
     質問をサブミットしjob_idを即時返却する。
     style: brief / standard / detailed。
+    domains: 検索対象分野のリスト（例: ["消防","法令"]）。省略で全分野対象。
     get_answerでジョブ状態をポーリングする。
     同時実行1・待機キュー2。超過時はerrorを返す。
     """
@@ -278,10 +281,11 @@ def submit_question(question: str, style: str = "standard") -> dict:
             "status": "queued",
             "question": question,
             "style": style,
+            "domains": domains,
             "submitted_at": time.time(),
         }
 
-    t = threading.Thread(target=_run_job, args=(job_id, question, style), daemon=True)
+    t = threading.Thread(target=_run_job, args=(job_id, question, style, domains), daemon=True)
     t.start()
 
     return {"job_id": job_id}

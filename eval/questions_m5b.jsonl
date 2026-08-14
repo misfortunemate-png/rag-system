@@ -1,0 +1,13 @@
+{"question": "コンクリートの養生期間は気温により何日以上と規定されているか？", "expected_domain": "建築", "expected_chunks": ["kenchiku-shiyousho-r7"]}
+{"question": "木造建築物の構造用合板の品質規格は何によるか？", "expected_domain": "建築", "expected_chunks": ["mokuzou-shiyousho-r7"]}
+{"question": "受変電設備の変圧器容量の算定方法を説明せよ。", "expected_domain": "設計", "expected_chunks": ["setsubi-sekkei-kijun-r6"]}
+{"question": "保全業務の定期点検における点検周期の考え方は？", "expected_domain": "設計", "expected_chunks": ["hozen-shiyousho-r5"]}
+{"question": "空気調和設備の冷凍機の試運転時の確認事項は何か？", "expected_domain": "機械", "expected_chunks": ["kikai-shiyousho-r7"]}
+{"question": "屋内消火栓設備の設置基準における防火対象物の区分は？", "expected_domain": "消防", "expected_chunks": ["bepyo-02-okunai-shoukasen"]}
+{"question": "スプリンクラー設備のヘッドの種類と設置基準は？", "expected_domain": "消防", "expected_chunks": ["bepyo-03-sprinkler"]}
+{"question": "塗装工事における素地ごしらえの工程を説明せよ。", "expected_domain": "塗装", "expected_chunks": ["nipponpaint-shinsetsu-r4"]}
+{"question": "建築物の維持管理における外壁の劣化診断方法は？", "expected_domain": "衛生", "expected_chunks": ["iji-kanri-manual-h20"]}
+{"question": "消防法施行令で定める防火対象物の用途区分は何か？", "expected_domain": "法令", "expected_chunks": ["law-90b"]}
+{"question": "電気事業法における電気工作物の定義は何か？", "expected_domain": "法令", "expected_chunks": ["law-89a"]}
+{"question": "公共建築工事の共通費の算定方法はどのように規定されているか？", "expected_domain": "", "expected_chunks": ["sekisan-kijun"]}
+{"question": "改修工事における電気設備の撤去の施工方法は？", "expected_domain": "電気", "expected_chunks": ["kaishu-denki-r7"]}

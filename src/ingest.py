@@ -106,33 +106,47 @@ def _write_refs_jsonl(chunks: list[dict]) -> None:
 
 
 def run() -> None:
-    from src.extract import plumber, pymupdf_ext
-    from src.extract.arbiter import arbitrate_pages
-    from src.chunker import chunk_pages, write_jsonl
+    import time
+    from src.extract import plumber
+    from src.extract.law_xml_ext import extract_chunks as law_xml_extract
+    from src.chunker import chunk_by_profile, detect_profile, write_jsonl
 
     docs = _load_documents()
     logger.info("=== documents.yaml: %d document(s) ===", len(docs))
 
     all_chunks: list[dict] = []
+    errors: list[dict] = []
+    t_start = time.time()
 
     for doc in docs:
-        pdf_path = Path(doc["pdf_path"])
-        if not pdf_path.exists():
-            logger.error("PDF not found: %s", pdf_path)
-            sys.exit(1)
+        file_path = Path(doc.get("file_path") or doc.get("pdf_path", ""))
+        if not file_path.exists():
+            logger.error("File not found: %s", file_path)
+            errors.append({"file": str(file_path), "error": "not found"})
+            continue
 
-        logger.info("--- %s (%s) ---", doc["doc_slug"], doc["domain"])
+        slug = doc["doc_slug"]
+        domain = doc.get("domain", "")
+        logger.info("--- %s (%s) [%s] ---", slug, domain, file_path.suffix)
 
-        logger.info("extract")
-        plumber_pages = plumber.extract_pages(pdf_path)
-        pymupdf_pages = pymupdf_ext.extract_pages(pdf_path)
+        try:
+            if file_path.suffix.lower() == ".xml":
+                chunks = law_xml_extract(file_path, doc_slug=slug, domain=domain)
+            else:
+                pages = plumber.extract_pages(file_path)
+                profile = detect_profile(pages)
+                logger.info("profile: %s", profile)
+                chunks = chunk_by_profile(
+                    pages, doc_slug=slug, domain=domain, profile=profile,
+                )
+            all_chunks.extend(chunks)
+            logger.info("%s: %d chunks", slug, len(chunks))
+        except Exception as e:
+            logger.error("ERROR processing %s: %s", slug, e)
+            errors.append({"file": str(file_path), "error": str(e)})
 
-        logger.info("arbitrate")
-        pages = arbitrate_pages({"plumber": plumber_pages, "pymupdf": pymupdf_pages})
-
-        logger.info("chunk")
-        chunks = chunk_pages(pages, doc_slug=doc["doc_slug"], domain=doc["domain"])
-        all_chunks.extend(chunks)
+    t_extract = time.time()
+    logger.info("extraction+chunking: %.1fs", t_extract - t_start)
 
     write_jsonl(all_chunks, CHUNKS_JSONL)
     _write_refs_jsonl(all_chunks)
@@ -140,9 +154,18 @@ def run() -> None:
     logger.info("=== embed & store ===")
     model = _load_model()
     embeddings = _embed_chunks(model, all_chunks)
-    _store_chroma(all_chunks, embeddings)
+    t_embed = time.time()
+    logger.info("embedding: %.1fs", t_embed - t_extract)
 
-    logger.info("=== done: %d chunks ingested ===", len(all_chunks))
+    _store_chroma(all_chunks, embeddings)
+    t_store = time.time()
+    logger.info("chroma store: %.1fs", t_store - t_embed)
+
+    logger.info("=== done: %d chunks ingested (%.1fs total) ===", len(all_chunks), t_store - t_start)
+    if errors:
+        logger.warning("=== %d file(s) had errors ===", len(errors))
+        for e in errors:
+            logger.warning("  %s: %s", e["file"], e["error"])
 
 
 def main():

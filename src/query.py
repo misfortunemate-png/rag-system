@@ -16,7 +16,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 CHROMA_DIR = Path("data/chroma")
-COLLECTION_NAME = "jusetu_spec"
+COLLECTION_NAME = "kitei_spec"
 MODEL_NAME = "cl-nagoya/ruri-v3-310m"
 CLAUDE_MODEL = "claude-sonnet-4-6"
 

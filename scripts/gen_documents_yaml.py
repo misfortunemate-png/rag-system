@@ -58,13 +58,13 @@ def main():
     seen_slugs: dict[str, int] = {}
 
     for group in data["files"]:
+        group_name = group.get("group", "")
         for file_entry in group.get("files", []):
             path = file_entry["path"]
             if file_entry.get("glob"):
                 continue
             if path.endswith(".txt"):
                 continue
-            # exclude 11_scraped
             if path.startswith("11_scraped"):
                 continue
 
@@ -82,13 +82,14 @@ def main():
 
             domain = get_domain(path)
             is_xml = path.endswith(".xml")
+            tags = [group_name] if group_name else []
 
             entry = {
                 "id": slug,
                 "doc_slug": slug,
                 "title": file_entry["title"],
                 "domain": domain,
-                "tags": [],
+                "tags": tags,
                 "profile": "hourei" if is_xml else "auto",
                 "file_path": f"data/raw/{path}",
                 "ingest_at": "2026-08-14",

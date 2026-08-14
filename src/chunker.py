@@ -340,26 +340,26 @@ def chunk_generic(
     return chunks
 
 
-# 条番号パターンの密度で jouban/generic を判定するしきい値
-_JOUBAN_DENSITY_THRESHOLD = 0.015  # 全文字数に対する条番号マッチ数の割合
+_JOUBAN_DENSITY_THRESHOLD = 0.015
+_DETECT_ARTICLE_RE = re.compile(r"^\s*\d+\.\d+\.\d+\s+", re.MULTILINE)
 
 
 def detect_profile(pages: list[dict]) -> str:
     """
-    先頭10ページのテキストから条番号密度を測定し、jouban/generic を返す。
+    先頭10ページのテキストから条番号密度（マッチ行数/総行数）を測定し、jouban/generic を返す。
     """
     sample = pages[:10]
-    total_chars = 0
+    total_lines = 0
     article_hits = 0
     for p in sample:
         text = p.get("text", "")
-        total_chars += len(text)
-        article_hits += len(_ARTICLE_RE.findall(text))
-    if total_chars == 0:
+        total_lines += len(text.split("\n"))
+        article_hits += len(_DETECT_ARTICLE_RE.findall(text))
+    if total_lines == 0:
         return "generic"
-    density = article_hits / total_chars
+    density = article_hits / total_lines
     profile = "jouban" if density >= _JOUBAN_DENSITY_THRESHOLD else "generic"
-    logger.info("detect_profile: density=%.5f → %s", density, profile)
+    logger.info("detect_profile: density=%.5f (%d hits / %d lines) → %s", density, article_hits, total_lines, profile)
     return profile
 
 

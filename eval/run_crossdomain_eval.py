@@ -80,6 +80,24 @@ def detect_boundary_keywords(answer: str) -> list[str]:
 _TOP_K_OVERRIDE: int | None = None
 
 
+def _slim_trace(trace: list) -> list:
+    """トレースからthinkingとhitのbodyを除去し、query・hits件数のみ保持。"""
+    slim = []
+    for t in trace:
+        entry = {k: v for k, v in t.items() if k != "thinking"}
+        if "tool_calls" in entry:
+            entry["tool_calls"] = [
+                {
+                    "name": tc["name"],
+                    "input": tc["input"],
+                    "hits": len(tc["output"]) if isinstance(tc.get("output"), list) else None,
+                }
+                for tc in entry["tool_calls"]
+            ]
+        slim.append(entry)
+    return slim
+
+
 def run_question(q: dict) -> dict:
     qid = q["id"]
     question = q["question"]
@@ -136,6 +154,7 @@ def run_question(q: dict) -> dict:
         "answer": result["answer"],
         "planner_output": result.get("planner_output"),
         "loops": len(result["trace"]),
+        "trace": _slim_trace(result.get("trace", [])),
         "elapsed_s": elapsed,
         "total_input_tokens": total_in,
         "total_output_tokens": total_out,

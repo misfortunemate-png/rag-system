@@ -43,31 +43,18 @@ def _build_scope_docs_text(config: "AgentConfig") -> str:
 
 
 def _build_planner_system(scope_text: str, user_domains: list[str] | None = None) -> str:
-    domain_section = ""
-    if user_domains is not None:
-        domain_list = "、".join(user_domains) if user_domains else "（なし）"
-        domain_section = f"""
-ユーザーが選択した検索対象分野: {domain_list}
-
-質問内容から、上記の中で実際に関連する分野を判断してください。
-回答の「relevant_domains」に関連分野のリストを返してください。
-判断できない場合は、ユーザーが選択した全分野をそのまま返してください。
-ユーザーが選択した範囲を広げてはいけません（絞る方向のみ）。
-"""
-
     return f"""\
 あなたは所蔵文書群を対象とする検索計画係です。
 質問を分析し、以下の所蔵文書から回答を見つけるための検索計画を立ててください。
 
 {scope_text}
-{domain_section}
+
 出力（プレーンテキスト）:
 質問タイプ: [可否確認/数値確認/手順確認/比較確認/オープン/その他]
 ターゲット: [答えが記載されているであろう表・条番号（例: 第2節2.1.3「施工要件一覧表」、第3章3.2.1）]
 クエリ1: [検索文字列]
 クエリ2: [必要なら]
 クエリ3: [必要なら]
-relevant_domains: [関連する分野のJSONリスト（例: ["電気", "消防"]）]
 
 重要: 可否確認の場合は個別言及より規定表・一覧表（使用可能材料を列挙したもの）の特定を優先。"""
 
@@ -737,17 +724,12 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
         planner_output, planner_debug = _run_planner(question, config, scope_text, user_domains)
         logger.info("planner: %s", (planner_output or "")[:200])
 
-    # ── Domain narrowing (R-10) ──────────────────────────────────────────────
+    # ── Domain narrowing (R-10) — disabled M5b-5 ────────────────────────────
     effective_domains = user_domains
-    planner_domains: list[str] | None = None
-    if planner_output and user_domains is not None:
-        planner_domains = _parse_relevant_domains(planner_output)
-        if planner_domains is not None:
-            effective_domains = [d for d in planner_domains if d in user_domains]
-            if not effective_domains:
-                effective_domains = user_domains
-            logger.info("domain_filter: user=%s, planner=%s, effective=%s",
-                        user_domains, planner_domains, effective_domains)
+    # プランナー由来のdomain自動絞り込みは廃止（M5b-5 発注者裁定）。
+    # UIの手動選択（user_domains）は引き続き有効。
+    # _parse_relevant_domains() は残置（将来の再有効化に備える）。
+    logger.info("R-10 disabled (M5b-5): effective_domains=%s", effective_domains)
 
     # ── Execution loop ────────────────────────────────────────────────────────
     advisor_state = {"fired": False, "result": None, "debug": {}}

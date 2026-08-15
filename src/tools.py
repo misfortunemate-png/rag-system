@@ -34,10 +34,6 @@ TOOLS = [
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "検索クエリ（日本語）"},
-                "domain": {
-                    "type": "string",
-                    "description": "系統フィルタ（建築/電気/機械 等）。省略で全系統対象",
-                },
                 "top_k": {
                     "type": "integer",
                     "description": "返す件数（デフォルト5）",
@@ -361,6 +357,19 @@ def search_chunks(
                 "domain": cd["domain"],
                 "refs": cd["refs"],
             })
+
+    # ── 6. ゼロ件セーフティ: フィルタあり結果0件 → フィルタなし再検索 ───────────
+    if not hits and (allowed_domains is not None or doc_ids is not None):
+        logger.info(
+            "filter_fallback: domains=%s doc_ids_len=%s -> unfiltered",
+            allowed_domains,
+            len(doc_ids) if doc_ids is not None else None,
+        )
+        fallback = search_chunks(query=query, top_k=top_k)
+        for h in fallback:
+            h["filter_fallback"] = True
+        return fallback
+
     return hits
 
 

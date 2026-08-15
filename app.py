@@ -92,14 +92,22 @@ def _render_trace_entries(trace: list) -> None:
             decision = step.get("decision", "")
             reason = step.get("reason", "")
             icon = "🎯"
-            label = "守備範囲外裁定" if decision == "out_of_scope" else "再計画裁定"
+            label = "収束裁定" if decision == "conclude" else "再計画裁定"
             phase = step.get("loop", "")
-            phase_label = "（プレループ）" if phase == "pre" else "（ポストループ）" if phase == "post" else ""
+            phase_label = "（ポストループ）" if phase == "post" else ""
             st.markdown(f"**{icon} アドバイザー{phase_label} — {label}**")
             st.caption(f"理由: {reason}")
+            missing = step.get("missing_coverage", "")
+            if missing:
+                st.caption(f"不足領域: {missing}")
             new_qs = step.get("new_queries", [])
             if new_qs:
                 st.caption("新クエリ: " + " / ".join(new_qs))
+            continue
+
+        # Budget stop entry
+        if step.get("budget_stop"):
+            st.markdown("**💰 予算到達打ち切り（検索コール上限）**")
             continue
 
         # Early stop entry
@@ -160,7 +168,7 @@ def _render_meta_footer(meta: dict | None) -> None:
     if advisor.get("usage"):
         u = advisor["usage"]
         decision = advisor.get("decision", "")
-        dec_icon = "🎯b" if decision == "out_of_scope" else "🎯a" if decision == "replan" else "🎯"
+        dec_icon = "🎯b" if decision == "conclude" else "🎯a" if decision == "replan" else "🎯"
         stage_parts.append(
             f"{dec_icon} {advisor.get('time_s', 0):.1f}s "
             f"({u.get('input_tokens', 0):,}/{u.get('output_tokens', 0):,}tok)"
@@ -396,7 +404,7 @@ with st.sidebar:
             advisor_dbg = dbg.get("advisor", {})
             if advisor_dbg.get("decision"):
                 dec = advisor_dbg["decision"]
-                label = "守備範囲外" if dec == "out_of_scope" else "再計画"
+                label = "収束" if dec == "conclude" else "再計画"
                 st.info(f"🎯 アドバイザー発動: {label} — {advisor_dbg.get('reason', '')}")
 
             if dbg.get("planner", {}).get("raw_response"):
@@ -567,8 +575,9 @@ with left:
                         question,
                         pre["all_chunks"],
                         st.session_state.config,
-                        pre.get("advisor_out_of_scope", False),
-                        pre.get("scope_text", ""),
+                        advisor_conclude_reason=pre.get("advisor_conclude_reason"),
+                        scope_text=pre.get("scope_text", ""),
+                        advisor_missing_coverage=pre.get("advisor_missing_coverage"),
                     )
                     st.write_stream(stream_gen)
 

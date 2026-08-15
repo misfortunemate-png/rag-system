@@ -77,6 +77,9 @@ def detect_boundary_keywords(answer: str) -> list[str]:
     return [kw for kw in BOUNDARY_KEYWORDS if kw in answer]
 
 
+_TOP_K_OVERRIDE: int | None = None
+
+
 def run_question(q: dict) -> dict:
     qid = q["id"]
     question = q["question"]
@@ -88,6 +91,8 @@ def run_question(q: dict) -> dict:
 
     config = load_config()
     config.selected_domains = None  # フィルタなし
+    if _TOP_K_OVERRIDE is not None:
+        config.top_k = _TOP_K_OVERRIDE
     result = run(question, config)
 
     elapsed = round(time.perf_counter() - t0, 1)
@@ -164,16 +169,32 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="最初の1問だけ実行")
     parser.add_argument("--no-rerank", action="store_true",
                         help="リランカーを無効化して実行（CPU環境での速度改善）")
+    parser.add_argument("--top-k", type=int, default=None, help="search top_k を上書き（例: --top-k 10）")
+    parser.add_argument("--tag", default="", help="結果ディレクトリのサフィックス（例: --tag topk10）")
     args = parser.parse_args()
 
     settings_path = Path("settings.json")
     original_rerank = None
-    if args.no_rerank and settings_path.exists():
-        s = _json.loads(settings_path.read_text(encoding="utf-8"))
+    original_top_k = None
+
+    s = _json.loads(settings_path.read_text(encoding="utf-8")) if settings_path.exists() else {}
+
+    if args.no_rerank:
         original_rerank = s.get("rerank_enabled", True)
         s["rerank_enabled"] = False
-        settings_path.write_text(_json.dumps(s, ensure_ascii=False, indent=2), encoding="utf-8")
         print("rerank_enabled -> False (--no-rerank)")
+
+    if args.top_k is not None:
+        global _TOP_K_OVERRIDE
+        _TOP_K_OVERRIDE = args.top_k
+        print(f"top_k override -> {args.top_k} (in-process, not written to settings.json)")
+
+    if args.no_rerank:
+        settings_path.write_text(_json.dumps(s, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    global RESULTS_DIR
+    if args.tag:
+        RESULTS_DIR = Path(f"eval/crossdomain_results_{args.tag}")
 
     questions = [
         json.loads(l)
@@ -260,11 +281,14 @@ def main():
         print(f"\n-> {summary_file} に保存")
 
     finally:
+        restore = {}
         if original_rerank is not None:
+            restore["rerank_enabled"] = original_rerank
+        if restore:
             s = _json.loads(settings_path.read_text(encoding="utf-8"))
-            s["rerank_enabled"] = original_rerank
+            s.update(restore)
             settings_path.write_text(_json.dumps(s, ensure_ascii=False, indent=2), encoding="utf-8")
-            print(f"rerank_enabled -> {original_rerank} (restored)")
+            print(f"settings restored: {restore}")
 
 
 if __name__ == "__main__":

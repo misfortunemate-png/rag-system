@@ -1,0 +1,51 @@
+{
+  "id": "cd-06",
+  "part": "A",
+  "question": "誘導灯の設置基準と、非常電源として用いる蓄電池設備の点検基準を挙げよ。",
+  "expected_docs": [
+    "law-90c",
+    "bepyo-16-yuudoutou",
+    "bepyo-25-1-hijouden-chikudenchi"
+  ],
+  "retrieval_doc_recall": 1.0,
+  "doc_recall": 0.0,
+  "retrieval_hit": [
+    "law-90c",
+    "bepyo-16-yuudoutou",
+    "bepyo-25-1-hijouden-chikudenchi"
+  ],
+  "retrieval_miss": [],
+  "citation_hit": [],
+  "citation_miss": [
+    "law-90c",
+    "bepyo-16-yuudoutou",
+    "bepyo-25-1-hijouden-chikudenchi"
+  ],
+  "retrieved_chunk_ids": [
+    "bepyo-16-yuudoutou-0005",
+    "bepyo-16-yuudoutou-0001",
+    "bepyo-16-yuudoutou-0006",
+    "bepyo-16-yuudoutou-0004",
+    "bepyo-16-yuudoutou-0003",
+    "bepyo-25-1-hijouden-chikudenchi-0001",
+    "bepyo-27-sougou-sousa-0001",
+    "bepyo-25-2-hijouden-nenryou-0001",
+    "bepyo-25-1-hijouden-chikudenchi-0002",
+    "bepyo-14-hijou-keihou-0001",
+    "bepyo-25-1-hijouden-chikudenchi-0013",
+    "bepyo-25-1-hijouden-chikudenchi-0003",
+    "bepyo-25-1-hijouden-chikudenchi-0009",
+    "law-90b-49",
+    "law-90c-77",
+    "law-90c-75"
+  ],
+  "cited_chunk_ids": [],
+  "answer": "",
+  "planner_output": "質問タイプ: 手順確認\nターゲット: 誘導灯に関する条文（消防法施行令・施行規則または別表第16）、非常電源（蓄電池）に関する条文（別表第25-1）\nクエリ1: 誘導灯 設置基準\nクエリ2: 蓄電池 点検基準 別表第25-1\nクエリ3: 非常電源 蓄電池 点検\nrelevant_domains: [\"消防\", \"法令_eGov\"]",
+  "loops": 3,
+  "elapsed_s": 90.9,
+  "total_input_tokens": 45156,
+  "total_output_tokens": 5568,
+  "cost_usd": 0.00472,
+  "boundary_keywords_detected": []
+}

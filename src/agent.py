@@ -1,8 +1,8 @@
 """
 Agent: three-role + advisor tool-use loop for construction spec QA.
 
-Architecture (M4):
-  Planner (optional) → [Pre-loop Advisor] → Execution Loop → [Post-loop Advisor] → Composer
+Architecture (M5b-4):
+  Planner (optional) → Execution Loop → [Mid/Post-loop Advisor] → Composer
 
 Public API:
   run_pre_composer(question, config) → dict  (planner + loop, no composer)
@@ -56,18 +56,17 @@ def _build_planner_system(scope_text: str, user_domains: list[str] | None = None
 """
 
     return f"""\
-あなたは建築工事仕様書の検索計画専門家です。
-質問を分析し、仕様書から回答を見つけるための検索計画を立ててください。
+あなたは所蔵文書群を対象とする検索計画係です。
+質問を分析し、以下の所蔵文書から回答を見つけるための検索計画を立ててください。
 
 {scope_text}
 {domain_section}
 出力（プレーンテキスト）:
 質問タイプ: [可否確認/数値確認/手順確認/比較確認/オープン/その他]
-ターゲット: [答えが記載されているであろう表・条番号（例: 表1.1.1「電線類」、2.2.3）]
+ターゲット: [答えが記載されているであろう表・条番号（例: 第2節2.1.3「施工要件一覧表」、第3章3.2.1）]
 クエリ1: [検索文字列]
 クエリ2: [必要なら]
 クエリ3: [必要なら]
-advisor_recommended: [true/false — 質問が広範囲・守備範囲不明・曖昧な場合はtrue]
 relevant_domains: [関連する分野のJSONリスト（例: ["電気", "消防"]）]
 
 重要: 可否確認の場合は個別言及より規定表・一覧表（使用可能材料を列挙したもの）の特定を優先。"""
@@ -89,19 +88,25 @@ def _build_loop_system(plan_section: str, scope_text: str) -> str:
 
 def _build_composer_system(style_instruction: str, scope_text: str) -> str:
     return f"""\
-あなたは建築工事仕様書の回答生成専門家です。
+あなたは所蔵文書を参照する調べ物係です。
+利用者は分野を往来する実務家です。「分野が違うので分かりません」は最も言ってはならない言葉です。
 
 {scope_text}
 
 {style_instruction}
 
-厳守事項:
-- 提供された条文素材に明確な根拠がある場合のみ断定的に回答すること
-- 素材に根拠がない場合は「根拠不足」と明記し、もっともらしい条番号で穴を埋めないこと
-- 可否を問う質問は権威ソース（規定表・一覧表）を引用できた場合のみ断定すること
-- 質問がスコープ内文書の守備範囲外の場合（内線規程・電技解釈等）は、
-  その旨を明記して「本文書には該当規定が見当たらない」と回答すること
-- 質問の前提が誤り（「AはよくBはダメ」といった規定が存在しない）場合は前提を訂正すること
+厳守事項（三部構成の標準形）:
+1. 所蔵から言えること: 収集された条文素材に根拠がある部分は、チャンク引用付きで回答すること
+2. 所蔵にないこと: 「所蔵文書に特段の規定がない」形式で明示し、あるべき規範領域を名指しすること。参照先の名称・検索キーワード等、利用者が自分で調べるための手がかりを必ず添えること
+3. 推論で補えること: 法規の一般原則・物理法則・規定の目的からの推論を「推論」ラベル付きで提示してよい。裏取りのない断定はしない
+
+禁止事項（違反は回答失敗と同等）:
+- 謝罪表現（「申し訳ありません」「ご不便をおかけします」等）の使用
+- 「無関係」「管轄外」等の断定（→「所蔵文書に特段の規定がない」に言い換える）
+- 全面拒否（所蔵に根拠がある部分は必ず回答し、ない部分だけを不足として明示する）
+- 「専門家にご相談ください」の丸投げ（→参照先の名指しと調査の手がかりを渡す）
+- もっともらしい条番号・数値での穴埋め（根拠のない条番号を推測で記載しない）
+- 質問の前提が誤り（規定が存在しない）場合は前提を訂正すること
 
 出力形式（二部形式）:
 まず回答本文（Markdown可）をそのまま出力すること。
@@ -110,35 +115,35 @@ def _build_composer_system(style_instruction: str, scope_text: str) -> str:
 <!-- CITATIONS -->
 {{"cited_chunk_ids": ["chunk_id_1", "chunk_id_2"]}}"""
 
-_ADVISOR_SYSTEM = """\
-あなたは公共建築工事標準仕様書（電気設備工事編）の検索アドバイザーです。
-実行ループの行き詰まりを判断し、方針を裁定する役です。
+_ADVISOR_SYSTEM_BASE = """\
+あなたは所蔵文書検索の行き詰まり判断アドバイザーです。
+実行ループの難航を裁定する役であり、「この所蔵文書群を持つ調べ物係」として機能します。
 
 以下の情報を受け取ります:
 - 質問
 - プランナーの計画（あれば）
 - 実行ループのトレース要約
-- これまでに収集したチャンク一覧
+- これまでに収集したチャンク（chunk_id・見出し・本文抜粋）
+- 現在のスコープ内文書一覧
 
 次のいずれかを裁定してください:
-(a) 再計画（replan）: 新しい検索クエリを提示し、実行ループを続行する
-(b) 守備範囲外（out_of_scope）: 当文書の守備範囲外と判定し、コンポーザーへ渡す
+(a) replan: まだ試していない検索軸があり、新クエリを提示して実行ループを続行する
+(b) conclude: 所蔵からの追加取得は見込み薄と判断し、収集済み素材で結論の編纂に移る
+
+「守備範囲外」という概念は存在しません。所蔵文書に規定がないことは検索後にのみ判断できます。
+conclude を選ぶ場合は「所蔵に不足していると思われる規範領域」の所見を必ず一〜二文で添えてください。
+その後の回答はコンポーザーが収集済み素材から三部構成で生成します。
 
 判断基準:
-- 再計画: まだ試していない検索軸があり、方向性を変えれば関連チャンクが得られると判断できる場合
-- 守備範囲外: 質問が他の規範（内線規程・電技解釈・JIS等）の領域であり、本仕様書に規定が存在しないと判断できる場合
-
-【重要】検索実績なし（トレース空・チャンク0件）でのプレループ発動時:
-- 「まだ検索していないから再計画」は誤り。質問の内容そのものから判断すること。
-- プランナーが守備範囲外の可能性を示唆して発動している。質問の前提や概念が本仕様書の射程外なら即座に守備範囲外を裁定せよ。
-- 「AはよくBはダメ」「〜してはならない部屋は」のように本仕様書が通常規定しないタイプの禁止条件・使い分け条件は守備範囲外を強く疑うこと。
+- replan: まだ試していない検索軸（異なるキーワード・別の文書・別の章）がある場合
+- conclude: これ以上検索しても新しいチャンクが得られる見込みが薄い場合
 
 出力（JSONのみ。他のテキストは出力しないこと）:
 再計画の場合:
 {"decision": "replan", "reason": "裁定の理由（一文）", "new_queries": ["クエリ1", "クエリ2"]}
 
-守備範囲外の場合:
-{"decision": "out_of_scope", "reason": "裁定の理由（一文）"}\
+収束の場合:
+{"decision": "conclude", "reason": "裁定の理由（一文）", "missing_coverage": "不足していると思われる規範領域の所見（一〜二文）"}\
 """
 
 _STYLE_INSTRUCTIONS = {
@@ -152,11 +157,6 @@ _CITATIONS_MARKER_LEN = len(_CITATIONS_MARKER)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
-
-def _parse_advisor_recommended(plan_text: str) -> bool:
-    """Extract advisor_recommended: true/false from planner output."""
-    m = re.search(r"advisor_recommended:\s*(true|false)", plan_text, re.IGNORECASE)
-    return m.group(1).lower() == "true" if m else False
 
 
 def _parse_relevant_domains(plan_text: str) -> list[str] | None:
@@ -278,23 +278,62 @@ def _run_planner(
     }
 
 
+_CHUNK_BODY_LIMIT = 120
+_ADVISOR_CHUNK_TOTAL_LIMIT = 8000
+
+
+def _format_chunks_for_advisor(chunks: list) -> str:
+    """chunk_id + heading + 本文先頭120字。合計8000字超の場合は超過分をID+見出しのみに落とす。"""
+    if not chunks:
+        return "（なし）"
+
+    def full_entry(c: dict) -> str:
+        heading = c.get("heading", "")
+        body_preview = (c.get("body") or "")[:_CHUNK_BODY_LIMIT]
+        return (
+            f"[{c['chunk_id']}] 階層: {c.get('hierarchy', '')} "
+            f"/ 見出し: {heading} / 本文: {body_preview}"
+        )
+
+    def short_entry(c: dict) -> str:
+        return f"[{c['chunk_id']}] 階層: {c.get('hierarchy', '')} / 見出し: {c.get('heading', '')}"
+
+    lines = []
+    total_chars = 0
+    for c in chunks:
+        entry = full_entry(c)
+        if total_chars + len(entry) <= _ADVISOR_CHUNK_TOTAL_LIMIT:
+            lines.append(entry)
+            total_chars += len(entry)
+        else:
+            lines.append(short_entry(c))
+    return "\n".join(lines)
+
+
 def _run_advisor(
-    question: str, plan: str | None, trace: list, all_chunks: list, config: AgentConfig
+    question: str, plan: str | None, trace: list, all_chunks: list, config: AgentConfig,
+    scope_text: str = "",
 ) -> tuple:
-    """Returns (result_dict, debug). result_dict has keys: decision, reason, new_queries."""
+    """Returns (result_dict, debug). result_dict has keys: decision, reason, new_queries/missing_coverage."""
     t0 = time.perf_counter()
     client = make_client(config.advisor_model)
 
     trace_summary = _summarize_trace(trace)
-    chunk_ids = ", ".join(c["chunk_id"] for c in all_chunks) if all_chunks else "（なし）"
+    chunks_text = _format_chunks_for_advisor(all_chunks)
+
+    advisor_system = _ADVISOR_SYSTEM_BASE
+    if scope_text:
+        advisor_system = f"{scope_text}\n\n{_ADVISOR_SYSTEM_BASE}"
 
     user_text = (
         f"質問: {question}\n\n"
         f"プランナーの計画:\n{plan or 'なし'}\n\n"
         f"実行ループトレース:\n{trace_summary}\n\n"
-        f"収集チャンク（{len(all_chunks)}件）: {chunk_ids}"
+        f"収集チャンク（{len(all_chunks)}件）:\n{chunks_text}"
     )
-    resp = client.chat([{"role": "user", "text": user_text}], [], _ADVISOR_SYSTEM)
+    input_size = len(advisor_system) + len(user_text)
+    logger.info("advisor input size: %d chars", input_size)
+    resp = client.chat([{"role": "user", "text": user_text}], [], advisor_system)
     elapsed = time.perf_counter() - t0
 
     raw = resp.text or ""
@@ -307,6 +346,10 @@ def _run_advisor(
                     s = p
                     break
         result = json.loads(s)
+        # 旧 out_of_scope 裁定をフォールバックで conclude に変換（後方互換）
+        if result.get("decision") == "out_of_scope":
+            result["decision"] = "conclude"
+            result.setdefault("missing_coverage", "（旧out_of_scope裁定を変換）")
     except Exception:
         result = {"decision": "replan", "reason": "解析失敗", "new_queries": []}
 
@@ -350,12 +393,9 @@ def _run_loop(
     query_cache: dict = {}
     max_loops_hit = True
     early_stop = False
+    budget_stop = False
     consecutive_empty = 0
     total_search_calls = 0
-
-    any_trigger_active = (
-        config.advisor_trigger_stall
-    )
 
     for loop_num in range(config.max_loops):
         response = client.chat(messages, TOOLS, system)
@@ -438,17 +478,32 @@ def _run_loop(
         })
         messages.append({"role": "tool_results", "results": tool_results})
 
-        # ── Mid-loop advisor: 難航検知 ─────────────────────────────────────────
+        # ── 予算到達: アドバイザーなしで即打ち切り（W-4） ─────────────────────
         stall_threshold = config.advisor_k
         search_budget = int(config.max_loops * 0.6)
-        stall_hit = (consecutive_empty >= stall_threshold) or (total_search_calls >= search_budget)
+        if total_search_calls >= search_budget and not advisor_state["fired"]:
+            budget_stop = True
+            trace.append({
+                "loop": loop_num + 1,
+                "budget_stop": True,
+                "tool_calls": [],
+                "thinking": None,
+            })
+            logger.info("budget_stop triggered at loop %d (total_search_calls=%d >= %d)",
+                        loop_num + 1, total_search_calls, search_budget)
+            break
+
+        # ── Mid-loop advisor: 難航検知（連続空振りのみ） ─────────────────────
+        stall_hit = consecutive_empty >= stall_threshold
         if (
             not advisor_state["fired"]
             and config.advisor_trigger_stall
             and stall_hit
         ):
             logger.info("advisor firing: stall detected at loop %d", loop_num + 1)
-            adv_result, adv_debug = _run_advisor(question, plan, trace, all_chunks, config)
+            adv_result, adv_debug = _run_advisor(
+                question, plan, trace, all_chunks, config, scope_text
+            )
             advisor_state["fired"] = True
             advisor_state["result"] = adv_result
             advisor_state["debug"] = adv_debug
@@ -459,11 +514,12 @@ def _run_loop(
                 "decision": adv_result.get("decision", ""),
                 "reason": adv_result.get("reason", ""),
                 "new_queries": adv_result.get("new_queries", []),
+                "missing_coverage": adv_result.get("missing_coverage", ""),
                 "tool_calls": [],
                 "thinking": None,
             })
 
-            if adv_result.get("decision") == "out_of_scope":
+            if adv_result.get("decision") == "conclude":
                 break
             elif adv_result.get("decision") == "replan":
                 consecutive_empty = 0
@@ -494,15 +550,33 @@ def _run_loop(
         "model": config.loop_model,
         "usage": total_usage,
         "time_s": round(elapsed, 2),
-        "loops": len([s for s in trace if not s.get("advisor") and not s.get("early_stop")]),
+        "loops": len([s for s in trace if not s.get("advisor") and not s.get("early_stop") and not s.get("budget_stop")]),
         "max_loops_hit": max_loops_hit,
         "early_stop": early_stop,
+        "budget_stop": budget_stop,
     }, max_loops_hit, early_stop
+
+
+def _build_composer_user_msg(
+    question: str, chunks_text: str, advisor_conclude_reason: str | None = None,
+    advisor_missing_coverage: str | None = None,
+) -> str:
+    if advisor_conclude_reason:
+        note = f"アドバイザー所見: {advisor_conclude_reason}"
+        if advisor_missing_coverage:
+            note += f"（不足領域: {advisor_missing_coverage}）"
+        return (
+            f"質問: {question}\n\n{note}\n"
+            "収集済み素材から言えることを回答し、不足は三部構成の形式で明示すること。\n\n"
+            f"--- 収集した条文素材 ---\n{chunks_text}"
+        )
+    return f"質問: {question}\n\n--- 収集した条文素材 ---\n{chunks_text}"
 
 
 def _run_composer(
     question: str, all_chunks: list, config: AgentConfig,
-    advisor_out_of_scope: bool = False, scope_text: str = "",
+    advisor_conclude_reason: str | None = None, scope_text: str = "",
+    advisor_missing_coverage: str | None = None,
 ) -> tuple:
     """Returns (answer, cited_chunk_ids, raw_output, debug)."""
     t0 = time.perf_counter()
@@ -512,15 +586,9 @@ def _run_composer(
     system = _build_composer_system(style_instr, scope_text)
 
     chunks_text = _format_chunks_for_composer(all_chunks) if all_chunks else "（検索結果なし）"
-    if advisor_out_of_scope:
-        user_msg = (
-            f"質問: {question}\n\n"
-            "アドバイザーがこの質問を当文書の守備範囲外と判定しました。"
-            "第二段回答（守備範囲外宣言）を生成してください。\n\n"
-            f"--- 収集した条文素材 ---\n{chunks_text}"
-        )
-    else:
-        user_msg = f"質問: {question}\n\n--- 収集した条文素材 ---\n{chunks_text}"
+    user_msg = _build_composer_user_msg(
+        question, chunks_text, advisor_conclude_reason, advisor_missing_coverage
+    )
 
     resp = client.chat([{"role": "user", "text": user_msg}], [], system)
     elapsed = time.perf_counter() - t0
@@ -547,8 +615,9 @@ def make_composer_stream(
     question: str,
     all_chunks: list,
     config: AgentConfig,
-    advisor_out_of_scope: bool = False,
+    advisor_conclude_reason: str | None = None,
     scope_text: str = "",
+    advisor_missing_coverage: str | None = None,
 ):
     """
     Returns (display_generator, get_result_fn).
@@ -562,15 +631,9 @@ def make_composer_stream(
     system = _build_composer_system(style_instr, scope_text)
 
     chunks_text = _format_chunks_for_composer(all_chunks) if all_chunks else "（検索結果なし）"
-    if advisor_out_of_scope:
-        user_msg = (
-            f"質問: {question}\n\n"
-            "アドバイザーがこの質問を当文書の守備範囲外と判定しました。"
-            "第二段回答（守備範囲外宣言）を生成してください。\n\n"
-            f"--- 収集した条文素材 ---\n{chunks_text}"
-        )
-    else:
-        user_msg = f"質問: {question}\n\n--- 収集した条文素材 ---\n{chunks_text}"
+    user_msg = _build_composer_user_msg(
+        question, chunks_text, advisor_conclude_reason, advisor_missing_coverage
+    )
 
     full_text_holder = [""]
     usage_holder: dict = {}
@@ -637,14 +700,12 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
     scope_text = _build_scope_docs_text(config)
     planner_output: str | None = None
     planner_debug: dict = {}
-    advisor_recommended = False
 
     user_domains = config.selected_domains  # None = all
 
     # ── Planner ───────────────────────────────────────────────────────────────
     if config.planner_enabled:
         planner_output, planner_debug = _run_planner(question, config, scope_text, user_domains)
-        advisor_recommended = _parse_advisor_recommended(planner_output or "")
         logger.info("planner: %s", (planner_output or "")[:200])
 
     # ── Domain narrowing (R-10) ──────────────────────────────────────────────
@@ -659,59 +720,18 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
             logger.info("domain_filter: user=%s, planner=%s, effective=%s",
                         user_domains, planner_domains, effective_domains)
 
-    # ── Pre-loop advisor: 常時 / プランナー裁量 ───────────────────────────────
-    advisor_state = {"fired": False, "result": None, "debug": {}}
-    effective_plan = planner_output
-    pre_loop_skip = False
-
-    fire_pre = config.advisor_trigger_always or (
-        config.advisor_trigger_planner and advisor_recommended
-    )
-    pre_advisor_trace: dict | None = None
-    if fire_pre:
-        logger.info("advisor firing: pre-loop (always=%s, planner=%s)", config.advisor_trigger_always, advisor_recommended)
-        adv_result, adv_debug = _run_advisor(question, planner_output, [], [], config)
-        advisor_state["fired"] = True
-        advisor_state["result"] = adv_result
-        advisor_state["debug"] = adv_debug
-
-        pre_advisor_trace = {
-            "loop": "pre",
-            "advisor": True,
-            "decision": adv_result.get("decision", ""),
-            "reason": adv_result.get("reason", ""),
-            "new_queries": adv_result.get("new_queries", []),
-            "tool_calls": [],
-            "thinking": None,
-        }
-
-        if adv_result.get("decision") == "out_of_scope":
-            pre_loop_skip = True
-        elif adv_result.get("decision") == "replan":
-            new_qs = adv_result.get("new_queries", [])
-            if new_qs:
-                extra = "\nアドバイザー補足クエリ:\n" + "\n".join(f"- {q}" for q in new_qs)
-                effective_plan = (planner_output or "") + extra
-
     # ── Execution loop ────────────────────────────────────────────────────────
-    if not pre_loop_skip:
-        trace, all_chunks, retrieved, loop_debug, max_loops_hit, early_stop = _run_loop(
-            question, effective_plan, config, advisor_state, scope_text, effective_domains
-        )
-    else:
-        trace, all_chunks, retrieved = [], [], []
-        loop_debug = {"model": config.loop_model, "usage": {}, "time_s": 0.0, "loops": 0, "max_loops_hit": False, "early_stop": False}
-        max_loops_hit = False
-        early_stop = False
-
-    # Prepend pre-loop advisor entry so it appears first in the trace UI
-    if pre_advisor_trace is not None:
-        trace = [pre_advisor_trace] + trace
+    advisor_state = {"fired": False, "result": None, "debug": {}}
+    trace, all_chunks, retrieved, loop_debug, max_loops_hit, early_stop = _run_loop(
+        question, planner_output, config, advisor_state, scope_text, effective_domains
+    )
 
     # ── Post-loop advisor: 未決着 ─────────────────────────────────────────────
     if not advisor_state["fired"] and config.advisor_trigger_unresolved and max_loops_hit:
         logger.info("advisor firing: post-loop unresolved")
-        adv_result, adv_debug = _run_advisor(question, planner_output, trace, all_chunks, config)
+        adv_result, adv_debug = _run_advisor(
+            question, planner_output, trace, all_chunks, config, scope_text
+        )
         advisor_state["fired"] = True
         advisor_state["result"] = adv_result
         advisor_state["debug"] = adv_debug
@@ -721,14 +741,18 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
             "decision": adv_result.get("decision", ""),
             "reason": adv_result.get("reason", ""),
             "new_queries": adv_result.get("new_queries", []),
+            "missing_coverage": adv_result.get("missing_coverage", ""),
             "tool_calls": [],
             "thinking": None,
         })
 
-    advisor_out_of_scope = (
-        advisor_state["result"] is not None
-        and advisor_state["result"].get("decision") == "out_of_scope"
-    )
+    # アドバイザー conclude 時の所見をコンポーザーへ渡す
+    advisor_result = advisor_state.get("result") or {}
+    advisor_conclude_reason: str | None = None
+    advisor_missing_coverage: str | None = None
+    if advisor_result.get("decision") == "conclude":
+        advisor_conclude_reason = advisor_result.get("reason", "")
+        advisor_missing_coverage = advisor_result.get("missing_coverage", "")
 
     # Domain filter trace
     domain_filter_trace = None
@@ -746,7 +770,8 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
         "trace": trace,
         "retrieved": retrieved,
         "all_chunks": all_chunks,
-        "advisor_out_of_scope": advisor_out_of_scope,
+        "advisor_conclude_reason": advisor_conclude_reason,
+        "advisor_missing_coverage": advisor_missing_coverage,
         "advisor_state": advisor_state,
         "scope_text": scope_text,
         "scope_doc_count": len(load_documents_yaml()) if config.selected_doc_ids is None
@@ -778,7 +803,10 @@ def run(question: str, config: AgentConfig | None = None) -> dict:
     pre = run_pre_composer(question, config)
 
     answer, cited_ids, raw_composer, composer_debug = _run_composer(
-        question, pre["all_chunks"], config, pre["advisor_out_of_scope"], pre.get("scope_text", "")
+        question, pre["all_chunks"], config,
+        advisor_conclude_reason=pre.get("advisor_conclude_reason"),
+        scope_text=pre.get("scope_text", ""),
+        advisor_missing_coverage=pre.get("advisor_missing_coverage"),
     )
 
     # Citation verification
@@ -828,6 +856,8 @@ def main():
             print(f"  [アドバイザー]: {step['decision']} — {step['reason']}")
         elif step.get("early_stop"):
             print(f"  ⏹ 早期打ち切り")
+        elif step.get("budget_stop"):
+            print(f"  💰 予算到達打ち切り")
         else:
             for tc in step["tool_calls"]:
                 args_preview = json.dumps(tc["input"], ensure_ascii=False)[:80]

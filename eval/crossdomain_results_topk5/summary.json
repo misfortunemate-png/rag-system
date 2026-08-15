@@ -1,0 +1,98 @@
+{
+  "a_questions": 8,
+  "avg_retrieval_doc_recall": 0.875,
+  "avg_doc_recall": 0.6042,
+  "a_detail": [
+    {
+      "id": "cd-01",
+      "retrieval_doc_recall": 1.0,
+      "doc_recall": 1.0,
+      "retrieval_miss": [],
+      "citation_miss": []
+    },
+    {
+      "id": "cd-02",
+      "retrieval_doc_recall": 1.0,
+      "doc_recall": 0.6667,
+      "retrieval_miss": [],
+      "citation_miss": [
+        "law-90b"
+      ]
+    },
+    {
+      "id": "cd-03",
+      "retrieval_doc_recall": 0.5,
+      "doc_recall": 0.5,
+      "retrieval_miss": [
+        "law-91b"
+      ],
+      "citation_miss": [
+        "law-91b"
+      ]
+    },
+    {
+      "id": "cd-04",
+      "retrieval_doc_recall": 1.0,
+      "doc_recall": 1.0,
+      "retrieval_miss": [],
+      "citation_miss": []
+    },
+    {
+      "id": "cd-05",
+      "retrieval_doc_recall": 1.0,
+      "doc_recall": 0.6667,
+      "retrieval_miss": [],
+      "citation_miss": [
+        "law-89b"
+      ]
+    },
+    {
+      "id": "cd-06",
+      "retrieval_doc_recall": 1.0,
+      "doc_recall": 0.0,
+      "retrieval_miss": [],
+      "citation_miss": [
+        "law-90c",
+        "bepyo-16-yuudoutou",
+        "bepyo-25-1-hijouden-chikudenchi"
+      ]
+    },
+    {
+      "id": "cd-07",
+      "retrieval_doc_recall": 0.5,
+      "doc_recall": 0.5,
+      "retrieval_miss": [
+        "law-92"
+      ],
+      "citation_miss": [
+        "law-92"
+      ]
+    },
+    {
+      "id": "cd-08",
+      "retrieval_doc_recall": 1.0,
+      "doc_recall": 0.5,
+      "retrieval_miss": [],
+      "citation_miss": [
+        "dengi-kaishaku"
+      ]
+    }
+  ],
+  "b_observations": [
+    {
+      "id": "cd-09",
+      "boundary_keywords_detected": [
+        "確認が必要"
+      ],
+      "has_boundary_declaration": true
+    },
+    {
+      "id": "cd-10",
+      "boundary_keywords_detected": [
+        "確認する必要"
+      ],
+      "has_boundary_declaration": true
+    }
+  ],
+  "total_cost_usd": 0.0945
+}

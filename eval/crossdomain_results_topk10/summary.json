@@ -1,0 +1,100 @@
+{
+  "a_questions": 8,
+  "avg_retrieval_doc_recall": 0.7292,
+  "avg_doc_recall": 0.6042,
+  "a_detail": [
+    {
+      "id": "cd-01",
+      "retrieval_doc_recall": 0.6667,
+      "doc_recall": 0.6667,
+      "retrieval_miss": [
+        "law-91b"
+      ],
+      "citation_miss": [
+        "law-91b"
+      ]
+    },
+    {
+      "id": "cd-02",
+      "retrieval_doc_recall": 0.6667,
+      "doc_recall": 0.6667,
+      "retrieval_miss": [
+        "law-90b"
+      ],
+      "citation_miss": [
+        "law-90b"
+      ]
+    },
+    {
+      "id": "cd-03",
+      "retrieval_doc_recall": 0.0,
+      "doc_recall": 0.0,
+      "retrieval_miss": [
+        "kikai-shiyousho-r7",
+        "law-91b"
+      ],
+      "citation_miss": [
+        "kikai-shiyousho-r7",
+        "law-91b"
+      ]
+    },
+    {
+      "id": "cd-04",
+      "retrieval_doc_recall": 1.0,
+      "doc_recall": 0.5,
+      "retrieval_miss": [],
+      "citation_miss": [
+        "nipponpaint-kaishu"
+      ]
+    },
+    {
+      "id": "cd-05",
+      "retrieval_doc_recall": 1.0,
+      "doc_recall": 1.0,
+      "retrieval_miss": [],
+      "citation_miss": []
+    },
+    {
+      "id": "cd-06",
+      "retrieval_doc_recall": 1.0,
+      "doc_recall": 1.0,
+      "retrieval_miss": [],
+      "citation_miss": []
+    },
+    {
+      "id": "cd-07",
+      "retrieval_doc_recall": 0.5,
+      "doc_recall": 0.5,
+      "retrieval_miss": [
+        "law-92"
+      ],
+      "citation_miss": [
+        "law-92"
+      ]
+    },
+    {
+      "id": "cd-08",
+      "retrieval_doc_recall": 1.0,
+      "doc_recall": 0.5,
+      "retrieval_miss": [],
+      "citation_miss": [
+        "setsubi-sekkei-kijun-r6"
+      ]
+    }
+  ],
+  "b_observations": [
+    {
+      "id": "cd-09",
+      "boundary_keywords_detected": [],
+      "has_boundary_declaration": false
+    },
+    {
+      "id": "cd-10",
+      "boundary_keywords_detected": [
+        "規定がない"
+      ],
+      "has_boundary_declaration": true
+    }
+  ],
+  "total_cost_usd": 0.0611
+}

@@ -163,6 +163,7 @@ def _parse_domains_filter(domains: list[str] | None) -> tuple[set[str] | None, b
     """Parse domains list into (allowed_domain_set, allow_law).
 
     Returns (None, True) when no filtering needed (all domains).
+    "その他" is normalized to "" (empty-domain documents such as積算系).
     """
     if domains is None:
         return None, True
@@ -172,6 +173,8 @@ def _parse_domains_filter(domains: list[str] | None) -> tuple[set[str] | None, b
     for d in domains:
         if d == "法令":
             allow_law = True
+        elif d == "その他":
+            allowed.add("")
         else:
             allowed.add(d)
     return allowed, allow_law
@@ -326,8 +329,10 @@ def search_chunks(
             for cid in candidates:
                 cd = chunk_data.get(cid)
                 if cd:
-                    text = cd.get("contextualized_text") or cd.get("body", "")
-                    pairs.append((RERANK_QUERY_PREFIX + query, text))
+                    heading = cd.get("heading", "")
+                    body = cd.get("body", "")
+                    text = (heading + "\n" + body).strip() if heading else body
+                    pairs.append((RERANK_QUERY_PREFIX + query, text[:2000]))
                     valid_cids.append(cid)
 
             if pairs:

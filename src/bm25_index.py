@@ -80,6 +80,9 @@ def search(
     allowed_domains: set[str] | None = None,
     allow_law: bool = True,
 ) -> list[dict]:
+    # Normalize "その他" → "" in allowed_domains
+    if allowed_domains is not None and "その他" in allowed_domains:
+        allowed_domains = (allowed_domains - {"その他"}) | {""}
     tokens = tokenize_ja(query)
     scores = bm25.get_scores(tokens)
     ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)

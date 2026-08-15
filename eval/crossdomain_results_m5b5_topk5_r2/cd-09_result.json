@@ -1,0 +1,215 @@
+{
+  "id": "cd-09",
+  "part": "B",
+  "question": "RC造既存建物の改修で、梁せい600mmの大梁に呼び径200の冷温水管（保温施工）を通す貫通孔を新設したい。貫通孔の径・位置の制限、補強の要否、スリーブと配管・保温の施工について、適用される規定を挙げよ。",
+  "expected_docs": [
+    "kouzou-sekkei-shiryou-r3",
+    "kenchiku-shiyousho-r7",
+    "kikai-shiyousho-r7"
+  ],
+  "retrieval_doc_recall": 1.0,
+  "doc_recall": 0.6667,
+  "retrieval_hit": [
+    "kouzou-sekkei-shiryou-r3",
+    "kenchiku-shiyousho-r7",
+    "kikai-shiyousho-r7"
+  ],
+  "retrieval_miss": [],
+  "citation_hit": [
+    "kouzou-sekkei-shiryou-r3",
+    "kikai-shiyousho-r7"
+  ],
+  "citation_miss": [
+    "kenchiku-shiyousho-r7"
+  ],
+  "retrieved_chunk_ids": [
+    "kouzou-sekkei-shiryou-r3-0020",
+    "kenchiku-shiyousho-r7-0464-1",
+    "dengi-kaishaku-kaisetsu-0496",
+    "dengi-kaishaku-kaisetsu-0528",
+    "dengi-kaishaku-0473",
+    "kouzou-sekkei-shiryou-r3-0011",
+    "kaishu-kenchiku-r7-0249",
+    "kouzou-sekkei-shiryou-r3-0015",
+    "kaishu-kenchiku-r7-0484",
+    "kaishu-kikai-r4-0118",
+    "kaishu-denki-r7-0083-1",
+    "nikkenren-setsubi-point-all-0051",
+    "kikai-shiyousho-r7-0183",
+    "kikai-shiyousho-r7-0358",
+    "kouzou-sekkei-kijun-r3-0012",
+    "kouzou-sekkei-kijun-r3-0013",
+    "suuryou-sekisan-kijun-0083",
+    "kaishu-kenchiku-r7-0262-1",
+    "kaishu-kenchiku-r7-0420",
+    "kaishu-kenchiku-r7-0524",
+    "kaishu-kenchiku-r7-0266-1",
+    "kaishu-kenchiku-r7-0235",
+    "kouzou-sekkei-kijun-r3-0010",
+    "kaishu-kenchiku-r7-0507",
+    "kaishu-kenchiku-r7-0498",
+    "suuryou-sekisan-kijun-0161",
+    "nikkenren-setsubi-point-all-0050",
+    "kikai-shiyousho-r7-0137",
+    "nikkenren-setsubi-point-all-0052"
+  ],
+  "cited_chunk_ids": [
+    "kouzou-sekkei-shiryou-r3-0011",
+    "kouzou-sekkei-kijun-r3-0010",
+    "kikai-shiyousho-r7-0137",
+    "kikai-shiyousho-r7-0183",
+    "kaishu-kikai-r4-0118",
+    "nikkenren-setsubi-point-all-0050",
+    "nikkenren-setsubi-point-all-0051",
+    "nikkenren-setsubi-point-all-0052"
+  ],
+  "answer": "## 1. 所蔵から言えること\n\n### 1.1 梁貫通孔の径・位置・補強（RC造・構造設計）\n\nまず、RC造の梁に貫通孔を新設する場合の構造上の基本規定は、**建築構造設計基準の資料（令和3年改定）第6章 鉄筋コンクリート造 6.2.2「梁貫通孔」**にあります。\n\n**径の制限**  \n> 孔径は梁せいの1/3以下で、貫通孔の中心間隔は両孔径の平均の3倍以上とする(貫通孔が円形でない場合は、外接円とする。)。また、一般部のあばら筋のピッチよりも孔径が大きくなる場合は、原則として、孔の上下に縦筋を設ける。  \n> ― kouzou-sekkei-shiryou-r3-0011\n\nしたがって、梁せい600mmの場合、**孔径は200mm以下**に制限されます。\n\n**位置の制限**  \n> 梁貫通孔は、ヒンジ領域を考慮し、原則として、柱面から1.5D(Dは梁せい。以下同じ。)離れた範囲内の位置に設けてはならない。ただし、せん断スパン比に応じて、これより短いヒンジ領域を設定することもできることとするが、その場合であっても、1.0D以上とする。  \n> ― kouzou-sekkei-shiryou-r3-0011\n\n柱面から1.5D＝**900mm以内**は原則NG。ただし、せん断スパン比によりヒンジ領域を1.0D（600mm）まで短縮可能です。また、\n\n> 貫通孔の上下の位置は、梁せいの中央付近とすることが望ましく、特に、梁中央部下端については、梁下端よりD/3の範囲に設けてはならない。  \n> ― kouzou-sekkei-shiryou-r3-0011\n\nつまり、**梁下端からD/3＝200mm以内は禁止**で、梁せい中央付近（下端から200mm～400mm程度の間）に設けるのが原則です。\n\n**補強の要否**  \n> 境界梁等大きなせん断力を受ける部分には、原則として、貫通孔を設けないこととするが、やむを得ず設けなければならない場合には、設計用せん断力を割り増す等、適切な値を用いて補強設計を行う。  \n> 梁貫通孔は、「RC規準」を参考に、原則として、有孔梁のせん断強度が無開口とした場合のせん断強度以上になるように補強設計を行う。  \n> ― kouzou-sekkei-shiryou-r3-0011\n\nさらに、設計基準本体には次の基本原則があります。\n\n> 梁貫通孔は、せん断余裕度の小さい部位を避けて設け、必要な補強を行う。  \n> ― kouzou-sekkei-kijun-r3-0010\n\n**つまり、貫通孔1つでも補強設計は必須**であり、有孔梁のせん断強度を無開口時以上に確保する必要があります。既製品の補強材を用いる場合は第三者機関の評定等が必要です。\n\n> なお、梁貫通孔補強に既製品を使用する場合には、第三者機関による評定や技術証明等を取得したものを使用し、その内容によることとする。  \n> ― kouzou-sekkei-shiryou-r3-0011\n\n### 1.2 スリーブの径・材料（機械設備工事）\n\n配管を通すためのスリーブについては、**公共建築工事標準仕様書（機械設備工事編）令和7年版 2.2.27「スリーブ」**が該当します。\n\n> スリーブの径は、原則として、管の外径（保温されるものにあっては保温厚さを含む。）より40mm程度大きなものとする。  \n> ― kikai-shiyousho-r7-0137\n\nまた、梁部分に使用できるスリーブ材料には制限があります。\n\n> (ｲ) 柱及び梁以外の箇所で、開口補強が不要であり、かつ、スリーブ径が200mm以下の部分は、紙製仮枠としてもよい。  \n> ― kikai-shiyousho-r7-0137\n\n**逆に言えば、柱・梁部分に紙製仮枠は使用できない**ため、鋼管製スリーブ等（同表の亜鉛鉄板製・つば付き鋼管製等）を用いることになります。\n\n### 1.3 貫通部の処理（防火区画・水密）\n\n**公共建築工事標準仕様書（機械設備工事編）令和7年版 2.8.1「一般事項」**および**改修版（令和4年版）2.6.1「一般事項」**には、貫通部の施工上の処理が定められています。\n\n> (1) 建築基準法施行令第112条第20項に規定する準耐火構造等の防火区画等を不燃材料の配管が貫通する場合は、その隙間をモルタル又はロックウール保温材で充塡する。また、不燃材料以外の配管が防火区画等を貫通する場合は、建築基準法令に適合する工法とする。  \n> (2) 保温を行わない配管で、天井、床、壁等を貫通する見え掛り部には、管座金を取付ける。  \n> (3) 外壁を貫通する配管とスリーブとの隙間は、バックアップ材等を充塡しシーリング材によりシーリングし、水密を確保する。  \n> ― kikai-shiyousho-r7-0183 / kaishu-kikai-r4-0118\n\n保温配管の場合は、スリーブ径に保温厚さを含めること、防火区画貫通部では隙間をモルタル又はロックウール保温材で充填すること、外壁貫通部では水密処理を行うことが必須です。\n\n### 1.4 改修工事における施工上の確認事項\n\n日建連のポイントシートには、既存RC躯体へのスリーブ新設に際して以下の確認が必要とされています。\n\n> ■スリーブ位置の整合性確認  \n> スリーブ位置が貫通可能な位置か構造図で確認します。  \n> ■スリーブ構造補強の実施  \n> スリーブに対する構造補強方法を事前に検討し、補強筋をセットします。  \n> ― nikkenren-setsubi-point-all-0051\n\n> スリーブは、工事区分を確認して漏れや間違いのないよう注意しましょう。また、既製品のRC躯体スリーブ補強筋は、メーカーに依頼し構造計算し設計の承認を得た後に発注します。  \n> ― nikkenren-setsubi-point-all-0050\n\n> □梁スリーブは貫通可能位置に計画されていますか。  \n> □柱面、梁下端からの離隔、相互間距離、最大スリーブ径など、構造特記仕様書の制約条件を確認してますか。  \n> ― nikkenren-setsubi-point-all-0052\n\n## 2. 所蔵にないこと\n\n- **既存RC造梁への貫通孔新設に特化した「改修工事標準仕様書」上の構造補強規定**は、所蔵の公共建築改修工事標準仕様書（建築工事編）には特段の規定がありません。改修編にはあと施工アンカー工事（8.12.1）や割裂補強筋（8.22.7等）の規定がありますが、梁貫通孔の径・位置・補強設計の詳細は、上記の**建築構造設計基準の資料**を準用することになります。\n- **冷温水管固有の保温厚さの数値基準**（例：寒冷地仕様の保温厚さ等）は、所蔵の機械設備工事標準仕様書には明記がありません。「建築設備設計基準」の保温・保冷工法の項を確認してください。\n- **既存梁内部の鉄筋位置の実測確認方法**（鉄筋探査の具体的な手順・判定基準）は所蔵にありません。日建連ポイントシートでは「貫通可能位置か構造図で確認」とされていますが、設計図書が不備な既存建物では、コア抜き前の鉄筋探査・レーダー探査を施工者が別途計画する必要があります。\n\n## 3. 推論で補えること（推論）\n\n- **呼び径200の配管の外径**は、JIS G 3452「配管用炭素鋼鋼管」のSGP200Aで約216.3mmです。これに保温厚さ（例えば25mm～50mm）を加えると、保温後外径は約266mm～316mmになります。スリーブ径は「保温後外径＋40mm程度」ですから、**スリーブ径は少なくとも約306mm以上**となる見込みです。\n- 一方、構造基準では梁せい600mmの孔径上限は200mmです。**スリーブ径（＝貫通孔径）が構造上限200mmを大きく上回るため、現条件のままでは構造基準を満たしません。**\n- 仮に貫通孔径を200mmに収めようとすると、保温後外径が160mm以下でなければならず、呼び径200の配管では非現実的です。**したがって、梁せい600mmの大梁に呼び径200の保温配管を通す計画は、原則として構造上不適当です。**\n- 対応方針としては、(1)配管径の縮小、(2)梁せいが大きい部位やヒンジ領域外へのルート変更、(3)梁の増し打ち・炭素繊維等による構造補強、(4)複数孔への分割（中心間隔を孔径平均の3倍以上確保）等を構造設計者と協議する必要があります。ただし、これらは推論であり、最終的な適合判定は構造設計者が行うべきものです。",
+  "planner_output": "質問タイプ: オープン\nターゲット: 建築構造設計基準 第3章3.2.1「梁の開口」、公共建築改修工事標準仕様書（建築工事編）第5章5.4「開口補強」、公共建築改修工事標準仕様書（機械設備工事編）第4章4.2「配管スリーブ」\nクエリ1: \"梁 開口 径 位置 補強 制限\"\nクエリ2: \"既存 梁 貫通孔 改修 補強\"\nクエリ3: \"配管 スリーブ 保温 施工 貫通\"",
+  "loops": 6,
+  "trace": [
+    {
+      "loop": 1,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "梁 開口 径 位置 補強 制限",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "既存 梁 貫通孔 改修 補強",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "配管 スリーブ 保温 施工 貫通",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 2,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "kouzou-sekkei-kijun-r3",
+            "hierarchy": "3.2.1"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "kaishu-kenchiku-r7",
+            "hierarchy": "5.4"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "kaishu-kikai-r4",
+            "hierarchy": "2.6.1"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 3,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "建築構造設計基準 第3章 梁 開口",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "改修 開口補強 梁 あと施工アンカー 鉄筋コンクリート",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 4,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "建築構造設計基準 第3章 鉄筋コンクリート造 梁 開口 貫通孔",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "改修 梁 開口 あと施工 補強 規定 公共建築",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 5,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "改修 建築 構造体 梁 貫通 孔 あと施工 補強筋",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "スリーブ 配管 保温 貫通 径 40mm 余裕 建築改修",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 5,
+      "budget_stop": true,
+      "tool_calls": []
+    }
+  ],
+  "elapsed_s": 202.5,
+  "total_input_tokens": 93384,
+  "total_output_tokens": 13333,
+  "cost_usd": 0.01027,
+  "boundary_keywords_detected": [
+    "確認が必要"
+  ],
+  "boundary_observation": {
+    "boundary_keywords_detected": [
+      "確認が必要"
+    ],
+    "has_boundary_declaration": true,
+    "expected_docs_cited": [
+      "kouzou-sekkei-shiryou-r3",
+      "kikai-shiyousho-r7"
+    ],
+    "note": "最終判定はPMが回答全文を読んで行う"
+  }
+}

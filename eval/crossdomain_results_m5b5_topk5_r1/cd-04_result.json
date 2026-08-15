@@ -1,0 +1,215 @@
+{
+  "id": "cd-04",
+  "part": "A",
+  "question": "既存の鉄骨階段の塗膜が劣化し、さびが発生している。塗替えの素地ごしらえと塗装工程について適用される規定を挙げよ。",
+  "expected_docs": [
+    "kaishu-kenchiku-r7",
+    "nipponpaint-kaishu"
+  ],
+  "retrieval_doc_recall": 1.0,
+  "doc_recall": 1.0,
+  "retrieval_hit": [
+    "kaishu-kenchiku-r7",
+    "nipponpaint-kaishu"
+  ],
+  "retrieval_miss": [],
+  "citation_hit": [
+    "kaishu-kenchiku-r7",
+    "nipponpaint-kaishu"
+  ],
+  "citation_miss": [],
+  "retrieved_chunk_ids": [
+    "kaishu-kenchiku-r7-0325",
+    "kaishu-kenchiku-r7-0332-1",
+    "kenchiku-shiyousho-r7-0632",
+    "kenchiku-shiyousho-r7-0633",
+    "kaishu-kenchiku-r7-0326",
+    "nipponpaint-kaishu-0304",
+    "kaishu-kenchiku-r7-0342",
+    "kaishu-kenchiku-r7-0463",
+    "kaishu-kenchiku-r7-0497",
+    "nipponpaint-kaishu-0161",
+    "nipponpaint-kaishu-0224",
+    "nipponpaint-kaishu-0225",
+    "nipponpaint-kaishu-0222",
+    "nipponpaint-kaishu-0288",
+    "nipponpaint-kaishu-0266",
+    "nipponpaint-kaishu-0235",
+    "nipponpaint-kaishu-0223",
+    "nipponpaint-kaishu-0227",
+    "nipponpaint-kaishu-0214",
+    "nipponpaint-kaishu-0322",
+    "nipponpaint-kaishu-0281",
+    "nipponpaint-kaishu-0287",
+    "nipponpaint-kaishu-0109",
+    "nipponpaint-kaishu-0328",
+    "nipponpaint-kaishu-0200",
+    "nipponpaint-kaishu-0244",
+    "nipponpaint-kaishu-0220",
+    "kaishu-kenchiku-r7-0335",
+    "kaishu-kenchiku-r7-0331-1",
+    "kaishu-kenchiku-r7-0318"
+  ],
+  "cited_chunk_ids": [
+    "kaishu-kenchiku-r7-0318",
+    "kaishu-kenchiku-r7-0332-1",
+    "kaishu-kenchiku-r7-0331-1",
+    "kaishu-kenchiku-r7-0335",
+    "kaishu-kenchiku-r7-0342",
+    "kaishu-kenchiku-r7-0463",
+    "nipponpaint-kaishu-0220",
+    "nipponpaint-kaishu-0224",
+    "nipponpaint-kaishu-0225",
+    "nipponpaint-kaishu-0266",
+    "nipponpaint-kaishu-0281"
+  ],
+  "answer": "## 回答\n\n### 1. 所蔵から言えること\n\n既存の鉄骨階段の塗替え（改修工事）に適用される規定は、**「公共建築改修工事標準仕様書（建築工事編）令和7年版」**（以下、改修仕様書）の第7章「塗装改修工事」が基本となります。鉄骨階段は「鉄鋼面」として扱われます。\n\n#### (1) 素地ごしらえ（下地調整）\n\n塗替えの場合、新設のような「素地ごしらえ」ではなく、既存塗膜を対象とした**「下地調整」**が該当します。\n\n改修仕様書 **7.2.3「鉄鋼面の下地調整」**（表7.2.2）によれば、下地調整の種別は特記によるものとし、特記がなければ **ＲＢ種** とされています【kaishu-kenchiku-r7-0318】。\n\nＲＢ種の工程は以下のとおりです：\n- **既存塗膜の除去**：ディスクサンダー、スクレーパー等により、劣化しぜい弱な部分及び錆等を除去し、活膜は残す\n- **汚れ・付着物除去**：素地を傷つけないようにワイヤブラシ等で除去\n- **油類除去**：既存塗膜を除去した範囲を溶剤ぶき\n- **研磨紙ずり**：研磨紙P120～220で全面を平らに研磨し、研磨かす等を除去\n\nなお、参考として新設工事用の「素地ごしらえ」規定（改修仕様書7.3.3）も存在しますが、塗替えの場合は上記7.2.3が優先適用されます。\n\n#### (2) 錆止め塗料塗り\n\n改修仕様書 **7.4.3「錆止め塗料塗り」** において、鉄鋼面の塗替えの場合の種別は **Ｃ種** とされています【kaishu-kenchiku-r7-0332-1】。\n\nＣ種の工程は：\n- **下地調整**：表7.2.2によるＲＢ種\n- **錆止め塗料塗り（下塗り１回目）**：素地露出部分のみ塗り付ける\n- **研磨紙ずり**：研磨紙P120～180で全面を平らに研磨\n- **錆止め塗料塗り（下塗り２回目）**：全面に塗り付ける\n\n錆止め塗料の種別は **7.4.2(1)**【kaishu-kenchiku-r7-0331-1】により、使用する節（塗料種別）に応じて選択します。例えば、合成樹脂調合ペイント塗り（５節）の場合はＡｓ種、耐候性塗料塗り（８節）の塗替えで下地調整がＲＢ種の場合はＥｓ種となります。\n\n#### (3) 上塗り工程（塗装仕上げ）\n\n塗替え後の上塗りについては、適用する塗料の種類に応じた節の規定に従います。主なものを挙げます：\n\n- **合成樹脂調合ペイント塗り（５節）**：改修仕様書7.5.3【kaishu-kenchiku-r7-0335】により、塗替えの場合の種別は特記がなければ **Ｂ種**。工程は、下地調整（ＲＣ種）→錆止め塗料塗り→パテかい・研磨紙ずり→中塗り（１回目）→研磨紙ずり→中塗り（２回目）→上塗り。\n\n- **耐候性塗料塗り（８節）**：改修仕様書7.8.2【kaishu-kenchiku-r7-0342】により、工程は錆止め塗料塗り（7.4.3(1)による）→研磨紙ずり（P120～220）→中塗り（JIS K 5659 Ａ種）→上塗り（同）。\n\n- **錆止め塗装のまま（鉄骨の再塗装）**：改修仕様書8.17.1【kaishu-kenchiku-r7-0463】により、この節に規定する以外は７章（塗装改修工事）による。\n\n#### (4) 日本ペイント塗装仕様書（参考情報）\n\n日本ペイントの塗装仕様書（公共建築改修工事標準仕様書対応）は、具体的な商品名・塗付け量を含む詳細な工程表を提供しています。特に以下の箇所が参考になります：\n\n- **鉄鋼面の下地調整**：表7.2.2（ＲＡ種・ＲＢ種・ＲＣ種の区分）【nipponpaint-kaishu-0220】【nipponpaint-kaishu-0224】【nipponpaint-kaishu-0225】\n- **鉄鋼面錆止め塗料塗り**：表7.3.3【nipponpaint-kaishu-0266】（塗替えはＣ種）\n- **鉄鋼面合成樹脂調合ペイント塗り**：表7.4.3【nipponpaint-kaishu-0281】等\n\nこれらの仕様書は改修仕様書に対応した民間の参考資料であり、実際の工事では発注者の指定する仕様書に従う必要があります。\n\n---\n\n### 2. 所蔵にないこと\n\n**所蔵文書に特段の規定がない事項**：\n\n- **「階段」という特定の建築部位に固有の塗装規定**：現行の所蔵文書（改修仕様書・新設仕様書・日本ペイント仕様書）には、階段に特化した塗装区分や工程は定められていません。鉄骨階段は一般の鉄鋼面と同様に扱われます。\n- **既存塗膜の劣化度合いに応じた詳細な判定基準**：改修仕様書7.2.3では「劣化しぜい弱な部分」の除去を定めていますが、具体的な劣化判定基準（膜厚測定値・さび面積率等）の数値基準は所蔵文書にはありません。\n\n**調査のための手がかり**：\n- 劣化判定の具体的な基準については、**「建築保全業務共通仕様書 令和5年版」**（doc_id: hozen-shiyousho-r5）または**「建築物における維持管理マニュアル（H20）」**（doc_id: iji-kanri-manual-h20）に塗膜劣化の評価基準が規定されている可能性があります。キーワード：「塗膜劣化 評価」「さび 発生 面積率」「塗替え 要否 判定」\n- 階段手すり等の安全上重要な部位の塗装については、**日本建築学会「JASS 18 建築工事標準仕様書」**（所蔵外）に詳細な品質基準がある場合があります。\n\n---\n\n### 3. 推論で補えること\n\n**【推論】**\n- 塗替えにおける素地ごしらえの種別選択は、さびの発生状況によって合理的に判断できます。軽度のさびで活膜が十分残っている場合はＲＢ種、広範囲にさびが進行し活膜がほとんど残っていない場合はＲＡ種（全面除去）とすることが、品質確保の観点から適切です。ただし、特記がない限り改修仕様書の標準はＲＢ種です。\n- 鉄骨階段は屋内階段と屋外階段で使用環境が大きく異なるため、屋外階段の場合は耐候性塗料（８節）の適用が推奨されます。屋内階段であれば合成樹脂調合ペイント（５節）で十分な場合が多いですが、摩耗が想定される場合はより強固な仕様が必要となる可能性があります。\n- 改修工事では、既存塗膜の剥離性や下地の状態を事前に確認し、部分的な素地露出に応じて錆止め塗料を適宜追加する必要があります。7.4.3(1)のＣ種では「素地露出部分のみ」が標準ですが、広範囲にさびが発生している場合は特記により種別を変更することが実務上適切です。\n\n---",
+  "planner_output": "質問タイプ: 手順確認\nターゲット: 日本ペイント 公共建築改修工事標準仕様書対応 塗装仕様書の「鉄骨階段 塗替え」該当節\nクエリ1: 鉄骨階段 塗替え 素地ごしらえ\nクエリ2: 改修 塗装工程 鉄骨\nクエリ3: さび 発生 塗替え 工程",
+  "loops": 5,
+  "trace": [
+    {
+      "loop": 1,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "鉄骨階段 塗替え 素地ごしらえ",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "改修 塗装工程 鉄骨",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "さび 発生 塗替え 工程",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 2,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "kaishu-kenchiku-r7",
+            "hierarchy": "7.2.2"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "nipponpaint-kaishu",
+            "hierarchy": "chunk-222"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "nipponpaint-kaishu",
+            "hierarchy": "chunk-224"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "nipponpaint-kaishu",
+            "hierarchy": "chunk-266"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 3,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "鉄鋼面 塗替え 下地調整 RA種 RB種 RC種",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "nipponpaint-kaishu",
+            "hierarchy": "chunk-0224"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "nipponpaint-kaishu",
+            "hierarchy": "chunk-0225"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 4,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "鋼部材 下地調整 表7.2.2 RA種 RB種 RC種 塗替え",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "鉄骨階段 塗替え 日本ペイント 改修 塗装仕様書",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 5,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "鉄鋼面 下地調整 表7.2.2 RA種 RB種 RC種 塗替え 日本ペイント",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "鉄鋼面の下地調整 鋼部材 表7.2.2 日本ペイント 改修",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    }
+  ],
+  "elapsed_s": 124.5,
+  "total_input_tokens": 107875,
+  "total_output_tokens": 7070,
+  "cost_usd": 0.009531,
+  "boundary_keywords_detected": [
+    "規定がない"
+  ]
+}

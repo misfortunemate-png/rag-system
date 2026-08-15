@@ -1,0 +1,255 @@
+{
+  "id": "cd-06",
+  "part": "A",
+  "question": "誘導灯の設置基準と、非常電源として用いる蓄電池設備の点検基準を挙げよ。",
+  "expected_docs": [
+    "law-90c",
+    "bepyo-16-yuudoutou",
+    "bepyo-25-1-hijouden-chikudenchi"
+  ],
+  "retrieval_doc_recall": 1.0,
+  "doc_recall": 1.0,
+  "retrieval_hit": [
+    "law-90c",
+    "bepyo-16-yuudoutou",
+    "bepyo-25-1-hijouden-chikudenchi"
+  ],
+  "retrieval_miss": [],
+  "citation_hit": [
+    "law-90c",
+    "bepyo-16-yuudoutou",
+    "bepyo-25-1-hijouden-chikudenchi"
+  ],
+  "citation_miss": [],
+  "retrieved_chunk_ids": [
+    "bepyo-16-yuudoutou-0005",
+    "law-90b-49",
+    "law-90c-77",
+    "law-90c-75",
+    "bepyo-16-yuudoutou-0001",
+    "bepyo-25-1-hijouden-chikudenchi-0002",
+    "bepyo-25-1-hijouden-chikudenchi-0001",
+    "bepyo-25-1-hijouden-chikudenchi-0013",
+    "bepyo-25-1-hijouden-chikudenchi-0003",
+    "bepyo-25-1-hijouden-chikudenchi-0009",
+    "kaishu-denki-r7-0419",
+    "kaishu-kikai-r4-0205",
+    "dengi-kaishaku-0025",
+    "hozen-shiyousho-r5-0310",
+    "dengi-kaishaku-1084",
+    "setsubi-sekkei-kijun-r6-0005",
+    "law-90c-76",
+    "law-90c-15",
+    "law-90c-73",
+    "law-91b-192",
+    "law-91b-193",
+    "law-91b-21",
+    "law-91b-208",
+    "law-91b-195"
+  ],
+  "cited_chunk_ids": [
+    "bepyo-16-yuudoutou-0005",
+    "law-90b-49",
+    "law-90c-77",
+    "law-90c-75",
+    "bepyo-16-yuudoutou-0001",
+    "bepyo-25-1-hijouden-chikudenchi-0002",
+    "bepyo-25-1-hijouden-chikudenchi-0001",
+    "bepyo-25-1-hijouden-chikudenchi-0013",
+    "bepyo-25-1-hijouden-chikudenchi-0003",
+    "bepyo-25-1-hijouden-chikudenchi-0009",
+    "setsubi-sekkei-kijun-r6-0005",
+    "law-91b-192",
+    "law-91b-193"
+  ],
+  "answer": "## 誘導灯の設置基準と非常電源（蓄電池設備）の点検基準\n\n### 1. 所蔵から言えること\n\n#### (1) 誘導灯の設置基準\n\n**根拠法令：消防法施行令第26条（誘導灯及び誘導標識に関する基準）**\n\n誘導灯は、防火対象物の区分に応じて次の4種類を設置しなければなりません（令第26条第1項）。\n\n| 種類 | 設置が必要な防火対象物 |\n|------|------------------------|\n| 避難口誘導灯 | 別表第1（一）～（四）項、（五）項イ、（六）項、（九）項、（十六）項イ、（十六の二）項、（十六の三）項に掲げる防火対象物、並びに（五）項ロ、（七）項、（八）項、（十）～（十五）項、（十六）項ロの地階・無窓階・11階以上の部分 |\n| 通路誘導灯 | 同上 |\n| 客席誘導灯 | 別表第1（一）項に掲げる防火対象物、及び（十六）項イ・（十六の二）項のうち（一）項用途に供される部分 |\n| 誘導標識 | 別表第1（一）～（十六）項に掲げる防火対象物 |\n\n技術上の基準（令第26条第2項）：\n- **避難口誘導灯**：避難口である旨を表示した緑色の灯火で、避難上有効な箇所に設置\n- **通路誘導灯**：避難の方向を明示した緑色の灯火で、廊下・階段・通路等に設置\n- **客席誘導灯**：客席照度0.2ルクス以上（測定方法は規則第28条：客席内通路の床面水平面照度）\n- **非常電源の附置**：誘導灯には非常電源を附置（同条第2項第4号）\n- **誘導標識**：緑色標識で、多数の者の目に触れやすい箇所に設置\n\n**根拠法令：消防法施行規則第28条の3（誘導灯及び誘導標識に関する基準の細目）**\n\n- 避難口誘導灯及び通路誘導灯の表示面の縦寸法・明るさは、区分に応じて規定（同条第1項）\n- 有効範囲は歩行距離で制限（同条第2項）\n- 設置箇所の細目：避難口の上部または直近、曲り角、廊下・通路の必要な箇所等（同条第3項）\n- 常時点灯が原則だが、無人時等の例外あり（同条第4項第2号）\n- 階段・傾斜路の照度は1ルクス以上（同条第4項第4号）\n- 非常電源は直交変換装置を有しない蓄電池設備とし、20分間（一部は60分間）作動可能な容量以上（同条第4項第10号）\n\n**設計基準：建築設備設計基準（令和6年版）第4節「誘導灯」**\n>「誘導灯は、各器具の区分に応じた有効範囲及び設置箇所を検討し、安全な避難誘導が行えるように配置する。」（setsubi-sekkei-kijun-r6-0005）\n\n#### (2) 誘導灯の点検基準\n\n**根拠：別表第16「誘導灯及び誘導標識の点検の基準」**\n\n**機器点検の主な確認事項**（bepyo-16-yuudoutou-0001, 0005）：\n- 外箱及び表示面：所定の種類が適正に設置されていること、視認障害がないこと\n- 採光又は照明：識別に十分な明るさがあること\n- 表示面の輝度（高輝度蓄光式）：劣化による減衰がないこと\n- 設置場所の照度（高輝度蓄光式）：十分な照度を確保していること\n- ヒューズ類：損傷、溶断等がなく、所定の種類・容量であること\n- 結線接続：適正であること\n\n#### (3) 非常電源（蓄電池設備）の点検基準\n\n**根拠：別表第25-1「非常電源（蓄電池設備）の点検の基準」**\n\n**機器点検の主な確認事項**（bepyo-25-1-hijouden-chikudenchi-0001, 0002, 0003, 0009）：\n\n| 項目 | 確認内容 |\n|------|----------|\n| 設置状況 | 周囲に障害物なし、不燃専用室の区画・防火戸・キュービクルの外箱等に変形・損傷なし、水の浸透なし、換気適正、照明・標識適正 |\n| 蓄電池本体 | 外形（変形・損傷・腐食・漏液なし）、表示適正、電解液（比重・液温・液量適正）、減液警報用電極（変形・損傷・腐食・断線なし） |\n| 充電装置 | 外形・表示適正、開閉器・遮断器（変形・損傷・端子緩みなし、開閉機能正常）、交流入力電圧・充電電圧適正 |\n\n**総合点検の主な確認事項**（bepyo-25-1-hijouden-chikudenchi-0013）：\n- 絶縁抵抗値が適正であること\n- 容量が適正であること\n- 切替装置：常用電源停電時に自動的に非常電源に切り替わること、復旧時に自動的に常用電源に戻ること（直交変換装置を有しない場合）\n- 電圧計・周波数計の指示値が適正であること\n- 警報動作が正常であること\n\n### 2. 所蔵にないこと\n\n以下の点については、所蔵文書に特段の規定がありません。\n\n- **誘導灯の非常電源として蓄電池を使用する場合の具体的な容量算定方法**：消防法施行規則第28条の3第4項第10号には「二十分間（一部六十分間）作動できる容量以上」とあるが、容量の具体的な計算式や負荷条件は規定されていません。\n  - **参照先**：日本消防設備安全センター「消防用設備等の基準に関する技術上の細目」、各都道府県の消防長会が定める「火災予防条例（例）」等\n  - **検索キーワード**：「蓄電池設備 容量算定 消防用設備」、「誘導灯 非常電源 容量計算」\n\n- **誘導灯の設置に係る建築基準法との調整**：建築基準法施行令第126条の4（非常用の照明装置）は誘導灯とは別の設備ですが、実際の建築設計では両者の設置位置や照度の調整が必要です。所蔵文書にはこの調整に関する具体的な記述はありません。\n  - **参照先**：国土交通省「建築物の防火避難規定の解説」、建築基準法関係告示\n  - **検索キーワード**：「誘導灯 非常用照明 区分」、「建築基準法 消防法 誘導灯 調整」\n\n- **蓄電池設備の点検周期**：別表第25-1には点検項目はあるが、点検頻度（年何回等）の規定はありません。\n  - **参照先**：消防法施行規則第31条の3（点検報告の対象機器と点検回数）、消防庁「消防用設備等の点検要領」\n  - **検索キーワード**：「消防設備点検 年2回 蓄電池」、「非常電源点検周期」\n\n### 3. 推論で補えること\n\n**推論①：誘導灯の非常電源点検と蓄電池点検の関係**\n誘導灯に附置する非常電源は、消防法施行規則第28条の3第4項第10号により「直交変換装置を有しない蓄電池設備」とされています。この蓄電池設備の点検は、誘導灯そのものの点検（別表第16）とは別に、非常電源（蓄電池設備）の点検基準（別表第25-1）に従って実施する必要があります。つまり、誘導灯の点検時には誘導灯本体（表示面・輝度・結線等）と、非常電源としての蓄電池設備（蓄電池本体・充電装置・切替装置等）の両方を確認しなければなりません。\n\n**推論②：建築基準法の非常用照明装置との棲み分け**\n建築基準法施行令第126条の4に基づく「非常用の照明装置」は、停電時に床面1ルクス以上の照度を確保するものであり（同令第126条の5）、誘導灯とは目的が異なります（避難口・方向の表示）。しかし、誘導灯の非常電源（蓄電池）と非常用照明の予備電源は、火災時の停電に対応する共通の設備として設計上整合を図ることが合理的です。両者は別々の法令に基づく別個の設備ですが、蓄電池設備の点検項目（切替動作・容量等）は共通の基準で確認可能です。\n\n**推論③：誘導灯の有効範囲と歩行距離の関係**\n誘導灯の有効範囲は歩行距離で規定されています（規則第28条の3第2項）。これは、避難経路の長さに応じて誘導灯の設置間隔が決まることを意味し、建築設計においては避難経路計画と誘導灯の配置を同時に検討する必要があります。特に、廊下の曲り角や分岐点では、歩行距離だけでなく視認性も確保しなければなりません（同条第3項第2号イ）。",
+  "planner_output": "質問タイプ: オープン\nターゲット: 誘導灯設置基準：建築基準法施行令第126条の4、消防法施行令第29条等；蓄電池点検基準：別表第25-1 非常電源（蓄電池）\nクエリ1: \"誘導灯\" AND \"設置\" AND \"基準\"\nクエリ2: \"非常電源\" AND \"蓄電池\" AND \"点検\"\nクエリ3: \"別表第25-1\"",
+  "loops": 4,
+  "trace": [
+    {
+      "loop": 1,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "誘導灯 設置 基準",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "非常電源 蓄電池 点検",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "別表第25-1",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 2,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "建築基準法施行令 第126条の4 誘導灯",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-1"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 3,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "建築基準法施行令 第126条の4 避難 誘導",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-2"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-3"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-13"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 4,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "建築基準法施行令 第百二十六条の四 非常用の照明装置",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-4"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-5"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-6"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-7"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-8"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-9"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-10"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-11"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-12"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-14"
+          },
+          "hits": null
+        }
+      ]
+    }
+  ],
+  "elapsed_s": 165.4,
+  "total_input_tokens": 108873,
+  "total_output_tokens": 8781,
+  "cost_usd": 0.01008,
+  "boundary_keywords_detected": []
+}

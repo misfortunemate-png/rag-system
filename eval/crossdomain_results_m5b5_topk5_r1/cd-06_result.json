@@ -1,0 +1,288 @@
+{
+  "id": "cd-06",
+  "part": "A",
+  "question": "誘導灯の設置基準と、非常電源として用いる蓄電池設備の点検基準を挙げよ。",
+  "expected_docs": [
+    "law-90c",
+    "bepyo-16-yuudoutou",
+    "bepyo-25-1-hijouden-chikudenchi"
+  ],
+  "retrieval_doc_recall": 1.0,
+  "doc_recall": 1.0,
+  "retrieval_hit": [
+    "law-90c",
+    "bepyo-16-yuudoutou",
+    "bepyo-25-1-hijouden-chikudenchi"
+  ],
+  "retrieval_miss": [],
+  "citation_hit": [
+    "law-90c",
+    "bepyo-16-yuudoutou",
+    "bepyo-25-1-hijouden-chikudenchi"
+  ],
+  "citation_miss": [],
+  "retrieved_chunk_ids": [
+    "bepyo-16-yuudoutou-0005",
+    "law-90b-49",
+    "law-90c-77",
+    "bepyo-16-yuudoutou-0001",
+    "law-90c-75",
+    "bepyo-25-1-hijouden-chikudenchi-0002",
+    "bepyo-25-1-hijouden-chikudenchi-0001",
+    "bepyo-24-hijouden-jikahatsu-0004",
+    "bepyo-25-1-hijouden-chikudenchi-0003",
+    "bepyo-25-1-hijouden-chikudenchi-0009"
+  ],
+  "cited_chunk_ids": [
+    "law-90b-49",
+    "law-90c-77",
+    "law-90c-75",
+    "bepyo-16-yuudoutou-0001",
+    "bepyo-16-yuudoutou-0005",
+    "bepyo-25-1-hijouden-chikudenchi-0001",
+    "bepyo-25-1-hijouden-chikudenchi-0002",
+    "bepyo-25-1-hijouden-chikudenchi-0003",
+    "bepyo-25-1-hijouden-chikudenchi-0009",
+    "bepyo-24-hijouden-jikahatsu-0004"
+  ],
+  "answer": "回答本文\n\n## 1. 誘導灯の設置基準\n\n誘導灯（避難口誘導灯、通路誘導灯、客席誘導灯）及び誘導標識の設置に関する技術上の基準は、消防法施行令第26条及び消防法施行規則第28条の3に定められています。\n\n### 1.1 設置が必要な防火対象物（消防法施行令第26条第1項）\n\n設置が義務付けられる防火対象物は、その用途と階数等に応じて次のように区分されています。\n\n*   **避難口誘導灯**：別表第一（一）項から（四）項まで、（五）項イ、（六）項、（九）項、（十六）項イ、（十六の二）項及び（十六の三）項に掲げる防火対象物、並びに同表（五）項ロ、（七）項、（八）項、（十）項から（十五）項まで及び（十六）項ロに掲げる防火対象物の**地階、無窓階及び十一階以上の部分**に設置します。\n*   **通路誘導灯**：上記と同じ範囲の防火対象物に設置します。\n*   **客席誘導灯**：別表第一（一）項に掲げる防火対象物（劇場等）及び同表（十六）項イ、（十六の二）項に掲げる防火対象物の部分で、同表（一）項の用途に供されるものに設置します。\n*   **誘導標識**：別表第一（一）項から（十六）項までに掲げる全ての防火対象物に設置します。\n\nただし、避難が容易であると認められるものとして総務省令で定めるものについては、この限りではありません（令第26条第1項ただし書）。\n\n### 1.2 技術上の基準（消防法施行令第26条第2項、消防法施行規則第28条の3）\n\n各設備の技術上の基準は以下のとおりです。\n\n*   **避難口誘導灯**：避難口である旨を表示した緑色の灯火とし、避難口に避難上有効に設ける。\n*   **通路誘導灯**：避難の方向を明示した緑色の灯火とし、廊下、階段、通路等に避難上有効に設ける。階段に設けるものは方向明示を要しない。\n*   **客席誘導灯**：客席の照度が0.2ルクス以上となるように設ける。照度は客席内の通路の床面における水平面について測定する（消防法施行規則第28条）。\n*   **誘導灯には非常電源を附置すること**（令第26条第2項第四号）。\n\nさらに、消防法施行規則第28条の3では、表示面の大きさや明るさ、設置位置の詳細、有効範囲、非常電源の容量等が細密に規定されています。特に、誘導灯の非常電源は、直交変換装置を有しない蓄電池設備とし、その容量は誘導灯を有効に**20分間**（特定の防火対象物の避難口等に設けるものは**60分間**）作動できる容量以上とすることとされています（規則第28条の3第4項第十号）。\n\n## 2. 非常電源として用いる蓄電池設備の点検基準\n\n蓄電池設備の点検基準は、消防法に基づく点検基準の別表第25「非常電源(蓄電池設備)」に定められています。\n\n### 2.1 機器点検の主な項目\n\n点検は次の事項について確認します。\n\n*   **設置状況**：周囲に障害物がないこと、不燃専用室の区画・防火戸等に変形・損傷等がないこと、水の浸透がないこと、換気が適正に行えること、照明が点検上支障がないこと、標識が適正に設けられていること（bepyo-25-1-hijouden-chikudenchi-0002）。\n*   **蓄電池本体**：外形に変形、損傷、著しい腐食、漏液等がないこと。表示が適正であること。電解液の比重及び液温が適正で規定量が満たされていること。減液警報用電極に変形、損傷、腐食、断線等がないこと（bepyo-25-1-hijouden-chikudenchi-0003）。\n*   **充電装置等**：外形に変形、損傷、著しい腐食等がないこと。表示が適正であること。開閉器及び遮断器に変形、損傷、端子の緩み等がなく、開閉機能及び開閉位置が正常で、容量が負荷に対して適正であること。交流入力電圧及び充電電圧が適正であること（bepyo-25-1-hijouden-chikudenchi-0009）。\n\n### 2.2 総合点検\n\n総合点検では、上記の機器点検の各項目に加え、実際に負荷をかけた状態での放電試験（容量試験）等を実施し、非常電源設備としての総合的な機能を確認します。\n\nなお、自家発電設備の始動用蓄電池設備についても、「蓄電池設備の機器点検の基準に準じた事項に適合していること」とされています（bepyo-24-hijouden-jikahatsu-0004）。",
+  "planner_output": "質問タイプ: オープン\nターゲット: 建築基準法施行令（誘導灯の設置基準）、別表第25-1 「非常電源（蓄電池）」（蓄電池設備の点検基準）\nクエリ1: 誘導灯 設置基準\nクエリ2: 蓄電池 点検基準",
+  "loops": 6,
+  "trace": [
+    {
+      "loop": 1,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "誘導灯 設置基準",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "蓄電池 点検基準",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 2,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "law-90b",
+            "hierarchy": "第二十六条"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "law-90c",
+            "hierarchy": "第二十八条の三"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-1"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 3,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "law-90b",
+            "hierarchy": "第2章/第3節/第4款/第26条"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "law-90c",
+            "hierarchy": "第2章/第2節/第3款/第28条の3"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-2"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 4,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-3"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-4"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-5"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-6"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-7"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-8"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-9"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-10"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-11"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-12"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 5,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-16-yuudoutou",
+            "hierarchy": "chunk-1"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-16-yuudoutou",
+            "hierarchy": "chunk-2"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-16-yuudoutou",
+            "hierarchy": "chunk-3"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-16-yuudoutou",
+            "hierarchy": "chunk-4"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-16-yuudoutou",
+            "hierarchy": "chunk-5"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-16-yuudoutou",
+            "hierarchy": "chunk-6"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 6,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "建築基準法施行令 誘導灯 設置",
+            "top_k": 3
+          },
+          "hits": 3
+        }
+      ]
+    }
+  ],
+  "elapsed_s": 157.9,
+  "total_input_tokens": 88278,
+  "total_output_tokens": 6665,
+  "cost_usd": 0.008046,
+  "boundary_keywords_detected": []
+}

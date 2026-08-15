@@ -1,0 +1,222 @@
+{
+  "id": "cd-08",
+  "part": "A",
+  "question": "受変電設備を設ける電気室の設計にあたり、機器の離隔・保有距離と部屋の広さ・構造について適用される基準を挙げよ。",
+  "expected_docs": [
+    "dengi-kaishaku",
+    "setsubi-sekkei-kijun-r6"
+  ],
+  "retrieval_doc_recall": 1.0,
+  "doc_recall": 1.0,
+  "retrieval_hit": [
+    "dengi-kaishaku",
+    "setsubi-sekkei-kijun-r6"
+  ],
+  "retrieval_miss": [],
+  "citation_hit": [
+    "dengi-kaishaku",
+    "setsubi-sekkei-kijun-r6"
+  ],
+  "citation_miss": [],
+  "retrieved_chunk_ids": [
+    "dengi-kaishaku-0642",
+    "dengi-kaishaku-kaisetsu-0246",
+    "dengi-kaishaku-kaisetsu-0700",
+    "dengi-kaishaku-kaisetsu-0586",
+    "dengi-kaishaku-0514",
+    "setsubi-sekkei-kijun-r6-0018",
+    "dengi-kaishaku-kaisetsu-0408",
+    "setsubi-keikaku-kijun-r6-0025",
+    "law-91a-93",
+    "setsubi-keikaku-kijun-r6-0024",
+    "setsubi-sekkei-kijun-r6-0016",
+    "setsubi-keikaku-kijun-r6-0011",
+    "setsubi-keikaku-kijun-r6-0012",
+    "setsubi-keikaku-kijun-r6-0010",
+    "setsubi-keikaku-kijun-r6-0023",
+    "dengi-kaishaku-kaisetsu-0790",
+    "dengi-kaishaku-kaisetsu-0732",
+    "dengi-kaishaku-kaisetsu-0695",
+    "dengi-kaishaku-kaisetsu-1319",
+    "dengi-kaishaku-kaisetsu-0245",
+    "dengi-kaishaku-0214",
+    "dengi-kaishaku-kaisetsu-1001",
+    "dengi-kaishaku-0015",
+    "dengi-kaishaku-kaisetsu-0244",
+    "dengi-kaishaku-kaisetsu-0783",
+    "dengi-kaishaku-kaisetsu-0293",
+    "dengi-kaishaku-kaisetsu-0656",
+    "setsubi-keikaku-kijun-r6-0026",
+    "dengi-kaishaku-0213",
+    "setsubi-keikaku-kijun-r6-0004",
+    "nikkenren-setsubi-point-all-0090",
+    "setsubi-keikaku-kijun-r6-0046"
+  ],
+  "cited_chunk_ids": [
+    "nikkenren-setsubi-point-all-0090",
+    "dengi-kaishaku-0214",
+    "dengi-kaishaku-kaisetsu-0245",
+    "dengi-kaishaku-kaisetsu-0246",
+    "dengi-kaishaku-0213",
+    "setsubi-sekkei-kijun-r6-0018",
+    "setsubi-keikaku-kijun-r6-0023",
+    "setsubi-keikaku-kijun-r6-0024",
+    "setsubi-keikaku-kijun-r6-0004",
+    "law-91a-93",
+    "setsubi-keikaku-kijun-r6-0026"
+  ],
+  "answer": "受変電設備を設ける電気室の設計にあたり、機器の離隔・保有距離と部屋の広さ・構造について、以下の基準が適用されます。\n\n---\n\n### 1. 所蔵から言えること\n\n#### A. 機器の離隔・保有距離（キュービクル式配電盤等）\n\n**1-1. 点検面の保有距離（0.6m以上）**\n所蔵文書の「日建連 建築技術者向け設備工事ポイントシート」には、キュービクルの保有距離について、以下の規定があります。\n- 点検を行う面：**0.6m以上**\n- 点検を行う面で、扉幅があり、換気口のない構造の面：**0.2m以上**\n- 点検を行わない面（背面等）：任意の距離\n\n（出典：nikkenren-setsubi-point-all-0090）\n\n**1-2. 充電部分とさく・へい等との離隔距離（特高の場合）**\n所蔵文書「電気設備の技術基準の解釈」（第38条）では、特別高圧の機械器具等を屋外に施設する場合、さく・へい等の高さと、さく・へい等から充電部分までの距離の和が下表以上と定められています。\n\n| 使用電圧区分 | さく・へい等の高さと充電部分までの距離の和 |\n|---|---|\n| 35,000V以下 | 5m |\n| 35,000Vを超え160,000V以下 | 6m |\n| 160,000V超過 | (6+c)m （cは超過分10kVごとに0.12mを加算） |\n\n（出典：dengi-kaishaku-0214）\n\nまた、同基準の解説では、さく・へい等と充電部分との最小離隔距離の参考値として、以下の表が示されています。\n\n| 使用電圧 | 最小離隔距離 |\n|---|---|\n| 7kV以下 | 0.5m |\n| 7kV超 35kV以下 | 1.5m |\n| 35kV超 80kV以下 | 2.0m |\n| 80kV超 115kV以下 | 3.0m |\n| 115kV超 175kV以下 | 4.0m |\n| 175kV超過 | 4m + 10kV超過ごとに0.12m加算 |\n\n（出典：dengi-kaishaku-kaisetsu-0245, dengi-kaishaku-kaisetsu-0246）\n\n**1-3. 取扱者以外の者の立入防止措置**\n高圧又は特別高圧の機械器具等を施設する発電所等（変電所含む）では、以下の措置が必要です。\n- さく・へい等を設けること\n- 出入口に立入禁止の表示と施錠装置を設けること\n- 屋内に施設する場合でも、構内に取扱者以外の者が立ち入らない措置を講じること\n\n（出典：dengi-kaishaku-0213, dengi-kaishaku-0214）\n\n#### B. 電気室の構造・広さ・配置\n\n**2-1. 電気室の基本要件（建築設備設計基準）**\n所蔵文書「建築設備設計基準」では、電気室に関して以下の設計要件が定められています。\n- 津波、洪水等による水害、火災、塩害等に対して適切な対策を施すこと\n- 機器の配置は、メンテナンスに必要な保守スペース、将来用の増設スペース及び更新時における機器の搬入ルートを確保すること\n- 電気室の換気は、機器の発熱等を考慮して適切に行えること\n\n（出典：setsubi-sekkei-kijun-r6-0018）\n\n**2-2. 電気室の計画基準（建築設備計画基準）**\n所蔵文書「建築設備計画基準」では、電気室について以下のように定められています。\n- 設備の信頼性、安全性及び保全性が確保できるように、受変電設備、電力貯蔵設備等を収容し、**不燃材料で区画し、延焼を防止できる室**とすること\n- 室内環境は、機器からの発生熱量等に応じた換気又は空調によって、適切な温度が維持できるものとすること\n- 電気室は、構内配電線の引込み、幹線の経路等に応じた位置に計画すること\n\n（出典：setsubi-keikaku-kijun-r6-0023, setsubi-keikaku-kijun-r6-0024）\n\n**2-3. 水害防止・他設備との混在回避**\n電気設備諸室には、**当該諸室に不必要な給排水管、雨水管、給排気ダクト、ガス管、油管等を横断又は設置しない**こと。また、電気設備諸室は、水損被害を受けないように便所、湯沸し室、厨房等の水を扱う室の直下階に配置しないこと。\n\n（出典：setsubi-keikaku-kijun-r6-0023）\n\n**2-4. 設備諸室全体の計画原則**\n設備諸室の計画においては、以下の検討が必要です。\n- 設備機器の設置場所は、信頼性、安全性、保全性、長寿命性等の確保について検討すること\n- 設備スペースは、安全性、省エネルギー・省資源、保全性、長寿命性等について検討すること\n- 主要な設備室の配置は、施設の用途、地震、津波・洪水等による災害時の機能維持等について検討すること\n- 設備諸室の大きさ及び形状は、主要機器の占有スペース、機器の搬入・搬出スペース、維持管理のスペース、附属機器類の設置に必要なスペース、将来の設備容量の増強及び更新時の機能維持を考慮すること\n\n（出典：setsubi-keikaku-kijun-r6-0004）\n\n---\n\n### 2. 所蔵にないこと\n\n所蔵文書に特段の規定がない事項として、以下のものがあります。\n\n**2-1. 建築基準法に基づく電気室の防火区画の具体的な性能規定**\n建築基準法（law-91a-93）は、敷地内空地に関する特例規定であり、電気室の防火区画の具体的構造（耐火時間、区画貫通部の処理方法等）についての詳細な規定は含まれていません。\n- 調査の手がかり：建築基準法施行令第112条（防火区画）、第129条の2の4（電気設備の保安上必要な措置）、関係告示（国土交通省告示）\n\n**2-2. 電気室の床耐荷重・機器基礎の設計基準**\n所蔵文書には、受変電機器の重量に対する床の耐荷重や、機器基礎の鉄筋量・コンクリート強度等の構造設計基準は含まれていません。\n- 調査の手がかり：「建築構造設計基準 令和3年改定」（kouzou-sekkei-kijun-r3）、同資料（kouzou-sekkei-shiryou-r3）、建築基準法施行令第81条（構造設計）\n\n**2-3. 電気室の天井高さ・通路幅の最小寸法**\n所蔵文書には、電気室の天井高さの最小値や、主要な通路幅の具体的数値（例：1.2m以上等）は明記されていません。\n- 調査の手がかり：「電気設備の技術基準の解釈」第38条の立入防止措置の趣旨、建築基準法施行令第126条（廊下幅）、労働安全衛生規則第540条（通路幅）、JIS C 4620（キュービクル式高圧受電設備）\n\n**2-4. 電気室の換気量の具体的算定方法**\n「機器の発熱等を考慮」との記載はあるものの、換気量の計算式や必要換気回数等の具体的数値は所蔵文書にありません。\n- 調査の手がかり：「建築設備設計基準」第2編「空気調和設備」の設計基準、建築基準法施行令第20条（換気設備）、シックハウス対策関連告示、「建築設備計画基準」の空気調和・換気設備の節（setsubi-keikaku-kijun-r6-0026）\n\n**2-5. 消防法に基づく電気室の消火設備の設置基準**\n所蔵文書には、電気室への消火設備（ハロゲン化物消火設備、不活性ガス消火設備、粉末消火設備等）の設置基準は含まれていません。\n- 調査の手がかり：消防法施行令第7条、別表第1、消防法施行規則第28条、消防庁点検基準別表第7（ハロゲン化物消火）、別表第6（不活性ガス消火）、別表第8（粉末消火）\n\n---\n\n### 3. 推論で補えること\n\n**推論1：機器の離隔距離は「点検面」と「非点検面」で異なる**\n日建連のポイントシート（nikkenren-setsubi-point-all-0090）で示されるキュービクルの保有距離は、点検を行う面で0.6m以上、点検を行わない背面等は任意の距離とされています。これは、**保守性とスペース効率のバランス**を考慮したものであり、設計者は、どの面が将来の点検・保守・増設の対象となるかを事前に明確にした上で、各面の保有距離を決定する必要があります。\n\n**推論2：電気室の「不燃材料で区画」の目的は延焼防止と非常時機能維持**\n建築設備計画基準（setsubi-keikaku-kijun-r6-0023）で「不燃材料で区画し、延焼を防止できる室」と定められているのは、電気室が火災発生時に受変電設備の機能を維持し、消火活動や避難等に必要な電力を供給し続けるためです。これは、消防法の非常電源設備（別表第23～25-2）の設置趣旨とも整合します。\n\n**推論3：電気室の配置は「水害リスク評価」と「設備の重要度」に応じて段階的に決定する**\n所蔵文書では、電気室の水害対策（津波、洪水）、水を扱う室の直下階回避、不要配管の横断禁止が定められています。これは、電気室が浸水した場合に受変電設備が機能喪失し、建物全体の停電・消防設備の不作動等の重大な結果を招くためです。設計者は、**計画段階で敷地のハザードマップを確認し、想定浸水深を機器設置高さに反映させる**などの段階的な対策を講じる必要があります。\n\n---",
+  "planner_output": "質問タイプ: その他\nターゲット: 電気設備の技術基準の解釈（第14条 離隔距離、第15条 保安距離）、建築設備設計基準 令和6年版（第5章 電気設備 第2節 受変電設備）\nクエリ1: 受変電設備 離隔 保有距離 技術基準\nクエリ2: 電気室 広さ 構造 設計基準\nクエリ3: 建築設備設計基準 受変電設備 計画",
+  "loops": 6,
+  "trace": [
+    {
+      "loop": 1,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "受変電設備 離隔 保有距離 技術基準",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "電気室 広さ 構造 設計基準",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "建築設備設計基準 受変電設備 計画",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 2,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "dengi-kaishaku",
+            "hierarchy": "第14条"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "dengi-kaishaku",
+            "hierarchy": "第15条"
+          },
+          "hits": null
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "電気設備の技術基準の解釈 第14条 離隔距離 第15条 保安距離",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 3,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "発蓄変電所 離隔距離 充電部分 さく へい 第14条 第15条",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "setsubi-sekkei-kijun-r6",
+            "hierarchy": "第8章 受変電設備"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 4,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "dengi-kaishaku-kaisetsu",
+            "hierarchy": "第38条"
+          },
+          "hits": null
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "電気設備の技術基準の解釈 第38条 発電所 変電所 離隔",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "電気室 受変電設備 不燃材料 区画 建築設備計画基準",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 5,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "電気設備の技術基準の解釈 第38条 発電所等への取扱者以外の者の立入の防止",
+            "top_k": 3
+          },
+          "hits": 3
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "setsubi-sekkei-kijun-r6",
+            "hierarchy": "第1章 電気設備"
+          },
+          "hits": null
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "建築設備設計基準 電気室 保守スペース 増設スペース",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 5,
+      "budget_stop": true,
+      "tool_calls": []
+    }
+  ],
+  "elapsed_s": 111.3,
+  "total_input_tokens": 74885,
+  "total_output_tokens": 6334,
+  "cost_usd": 0.007015,
+  "boundary_keywords_detected": [
+    "規定がない"
+  ]
+}

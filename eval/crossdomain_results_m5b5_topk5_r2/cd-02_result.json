@@ -1,0 +1,268 @@
+{
+  "id": "cd-02",
+  "part": "A",
+  "question": "屋内消火栓設備の非常電源として自家発電設備を用いる場合、法令上の要件と、点検時に確認すべき項目は何か。",
+  "expected_docs": [
+    "law-90b",
+    "bepyo-02-okunai-shoukasen",
+    "bepyo-24-hijouden-jikahatsu"
+  ],
+  "retrieval_doc_recall": 0.6667,
+  "doc_recall": 0.6667,
+  "retrieval_hit": [
+    "law-90b",
+    "bepyo-24-hijouden-jikahatsu"
+  ],
+  "retrieval_miss": [
+    "bepyo-02-okunai-shoukasen"
+  ],
+  "citation_hit": [
+    "law-90b",
+    "bepyo-24-hijouden-jikahatsu"
+  ],
+  "citation_miss": [
+    "bepyo-02-okunai-shoukasen"
+  ],
+  "retrieved_chunk_ids": [
+    "law-90b-33",
+    "law-90c-44",
+    "law-90b-68",
+    "bepyo-24-hijouden-jikahatsu-0001",
+    "law-90b-41",
+    "law-90c-43",
+    "bepyo-24-hijouden-jikahatsu-0014",
+    "bepyo-27-sougou-sousa-0001",
+    "bepyo-24-hijouden-jikahatsu-0002",
+    "bepyo-24-hijouden-jikahatsu-0011",
+    "law-89b-175",
+    "law-89b-176"
+  ],
+  "cited_chunk_ids": [
+    "law-90b-33",
+    "law-90c-44",
+    "law-90b-41",
+    "bepyo-24-hijouden-jikahatsu-0001",
+    "bepyo-24-hijouden-jikahatsu-0002",
+    "bepyo-24-hijouden-jikahatsu-0014",
+    "bepyo-24-hijouden-jikahatsu-0011",
+    "bepyo-27-sougou-sousa-0001",
+    "law-90b-68",
+    "law-89b-175",
+    "law-89b-176"
+  ],
+  "answer": "はい、承知しました。屋内消火栓設備の非常電源として自家発電設備を用いる場合の法令上の要件と点検項目について、所蔵文書に基づきご説明します。\n\n## 回答\n\n### 1. 所蔵から言えること\n\n#### 1.1 法令上の要件（設置基準）\n\n屋内消火栓設備には、**非常電源の附置が法令上義務付けられています**。\n\n*   **根拠法令**：消防法施行令第11条第3項第1号ヘにおいて、屋内消火栓設備には「非常電源を附置すること」と規定されています (law-90b-33)。\n*   **非常電源の種類と要件**：消防法施行規則第12条第1項第4号において、非常電源の種類と具体的な技術基準が定められています。自家発電設備を採用する場合、同号ロの規定に従う必要があります (law-90c-44)。\n    *   **非常電源の種類**：自家発電設備、蓄電池設備、燃料電池設備、又は非常電源専用受電設備のいずれかによります。\n    *   **特定防火対象物の場合**：延べ面積が1,000平方メートル以上の特定防火対象物にあっては、自家発電設備、蓄電池設備、又は燃料電池設備によることが必要です（非常電源専用受電設備は不可）(law-90c-44)。\n    *   **自家発電設備の細目**：同号ロでは、自家発電設備について、以下の事項を満たすべきことが規定されています (law-90c-44)。\n        1.  非常電源専用受電設備の規定の一部（(ホ)及び(ト)を除く）の例によること。\n        2.  加えて、自家発電設備独自の細目に従うこと。\n*   **関連する消火設備全般の基準**：上記は屋内消火栓設備に特化した規定ですが、消防法施行令第19条において、**屋外消火栓設備**についても非常電源を附置することが定められています (law-90b-41)。\n\n#### 1.2 点検時に確認すべき項目\n\n非常電源（自家発電設備）の点検基準は、消防法施行規則に基づく「別表第24 非常電源（自家発電設備）の点検の基準」に詳細に定められています。\n\n点検は「機器点検」と「総合点検」に区分され、確認すべき主要な項目は以下の通りです。\n\n**A. 機器点検**\n\n1.  **設置状況** (bepyo-24-hijouden-jikahatsu-0001, bepyo-24-hijouden-jikahatsu-0002)\n    *   **周囲の状況**：使用上及び点検上の障害となるものがないこと。\n    *   **区画等**：不燃専用室の区画、防火戸等、又はキュービクル式の外箱、扉、換気口等に変形、損傷等がないこと。\n    *   **水の浸透**：水が浸透していないこと。\n    *   **換気**：適正に行えること。\n    *   **照明**：使用上及び点検上、支障がないこと。\n    *   **標識**：適正に設けられていること。\n\n2.  **表示** (bepyo-24-hijouden-jikahatsu-0002)\n    *   表示が適正であること。\n\n3.  **自家発電装置（原動機と発電機の連結体）** (bepyo-24-hijouden-jikahatsu-0002)\n    *   外観、発電機、原動機、制御盤等の状態確認。\n\n4.  **運転性能・切替性能** (bepyo-24-hijouden-jikahatsu-0014)\n    *   **負荷運転**：漏油、異臭、不規則音、異常な振動、発熱等がなく、運転が正常であること。\n    *   **内部観察等**：機器内部の観察、潤滑油や冷却水の成分分析等を実施し、腐食、劣化等がないこと。\n    *   **運転切替性能（電力を常時供給する設備に限る）**：常用電源が停電してから規定の時間内に自家発電設備に係る負荷回路の専用運転に切り替わること。\n\n5.  **停止性能・耐震措置・予備品等** (bepyo-24-hijouden-jikahatsu-0011)\n    *   **停止性能**：手動停止装置及び自動停止機能（ある場合）により、確実に停止し、異常がないこと。\n    *   **耐震措置**：アンカーボルト、可とう管継手等に変形、損傷、著しい腐食等がなく、耐震措置が適正に行われていること。\n    *   **予備品等**：予備品及び回路図等が備えてあること。\n\n**B. 総合点検**\n*   別表第24では、総合点検において確認すべき事項も定められていますが、本件で提供されたチャンクには詳細な内容は含まれていません。\n\n**C. 総合操作盤に関する注意点**\n*   屋内消火栓設備に総合操作盤が設置されている場合、その点検基準は「別表第27 総合操作盤の点検の基準」に従います。この中で、内蔵型の非常電源については、以下の点検が規定されています (bepyo-27-sougou-sousa-0001)。\n    *   **外形**：変形、損傷、著しい腐食等がないこと。\n    *   **表示**：適正であること。\n    *   **端子電圧**：規定値以上であること。\n\n### 2. 所蔵にないこと\n\n所蔵文書に特段の規定がない事項として、以下が挙げられます。\n\n*   **自家発電設備の出力・容量・燃料に関する具体的な技術基準**：非常電源として必要な出力（例：kW）、燃料の種類・貯蔵量、連続運転時間などについて、消防法令上の具体的な数値基準は所蔵文書からは確認できません。これらの基準は、消防庁長官が定める基準や、関連する日本工業規格（JIS）等で詳細が規定されている可能性があります。\n*   **電気事業法との関係**：自家発電設備が特定自家用電気工作物（出力1,000kW以上など）に該当する場合、電気事業法に基づく届出等の手続きが必要となることがあります (law-89b-175, law-89b-176)。所蔵文書は消防法令に限定されており、電気事業法に基づく工事・維持の技術基準（例えば、電気設備の技術基準の解釈）については、別途参照が必要です。\n*   **消防設備士の工事・整備範囲**：自家発電設備の工事や整備が消防設備士の業務範囲に含まれるか否かの線引きについては、消防法施行令第36条の2 (law-90b-68) からは、電源部分は工事・整備の対象から除かれると読み取れますが、具体的な範囲の解釈や、電気工事士等他の資格との関係については、所蔵文書では詳細を確認できません。\n\n**【調査のための手がかり】**\n*   **出力・容量基準**：消防庁「消防用設備等の設置及び維持に関する技術上の基準」に関する告示や通達、または「建築設備設計基準」(setsubi-sekkei-kijun-r6) の該当章を確認してください。検索キーワード例：「屋内消火栓 非常電源 容量 基準」、「自家発電設備 消防庁 告示」。\n*   **電気事業法との関係**：電気事業法の解釈や、自家用電気工作物の技術基準である「電気設備の技術基準の解釈」(dengi-kaishaku) を参照してください。検索キーワード例：「自家発電設備 電気事業法 届出」、「非常電源 電気設備技術基準」。\n\n### 3. 推論で補えること\n\n**推論**: 法令上の「非常電源」は、常用電源の停電時において、消火設備がその機能を維持するために必要な電力を供給することを目的としています。したがって、自家発電設備の点検において「負荷運転」(bepyo-24-hijouden-jikahatsu-0014) と「運転切替性能」(bepyo-24-hijouden-jikahatsu-0014) の確認が重視されているのは、この目的を達成するためのものであると推測できます。点検の実務においては、単に発電機が起動するかだけでなく、実際にポンプ等の負荷が接続された状態で安定した電力が供給され、かつ停電から非常電源への切り替えが規定時間内に完了することを確認することが、実効性の確保に不可欠です。",
+  "planner_output": "質問タイプ: 比較確認（法令要件と点検項目の両方を問う）\nターゲット: 消防法関係（法令）+ 別表第24「非常電源（自家発）」\nクエリ1: 屋内消火栓 非常電源 自家発電 消防法\nクエリ2: 別表第24 非常電源 自家発 点検\nクエリ3: 非常電源 自家発電設備 屋内消火栓 消防法施行規則",
+  "loops": 7,
+  "trace": [
+    {
+      "loop": 1,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "屋内消火栓 非常電源 自家発電 消防法",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 2,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "law-90c",
+            "hierarchy": "第十二条"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "chunk-1"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 3,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "消防法施行規則 第十二条 屋内消火栓設備 非常電源",
+            "top_k": 3
+          },
+          "hits": 3
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "別表第24 非常電源 自家発電設備 点検の基準"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 4,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "別表第24 非常電源 自家発電設備 点検 基準 機器点検 総合点検",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 5,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "chunk-1"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "chunk-3"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "chunk-4"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "chunk-5"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "chunk-6"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "chunk-7"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "chunk-8"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "chunk-9"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "chunk-10"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "chunk-12"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "chunk-13"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 6,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "chunk-14"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-24-hijouden-jikahatsu",
+            "hierarchy": "chunk-15"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "law-90c",
+            "hierarchy": "第十二条 四 ロ"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 7,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "消防法施行規則 第十二条 第四号 ロ 自家発電設備 非常電源",
+            "top_k": 3
+          },
+          "hits": 3
+        }
+      ]
+    }
+  ],
+  "elapsed_s": 150.0,
+  "total_input_tokens": 135389,
+  "total_output_tokens": 6928,
+  "cost_usd": 0.011417,
+  "boundary_keywords_detected": [
+    "規定がない"
+  ]
+}

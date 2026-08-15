@@ -1,0 +1,119 @@
+{
+  "a_questions": 8,
+  "avg_retrieval_doc_recall": 0.375,
+  "avg_doc_recall": 0.25,
+  "a_detail": [
+    {
+      "id": "cd-01",
+      "retrieval_doc_recall": 0.3333,
+      "doc_recall": 0.3333,
+      "retrieval_miss": [
+        "kenchiku-shiyousho-r7",
+        "law-91b"
+      ],
+      "citation_miss": [
+        "kenchiku-shiyousho-r7",
+        "law-91b"
+      ]
+    },
+    {
+      "id": "cd-02",
+      "retrieval_doc_recall": 1.0,
+      "doc_recall": 0.0,
+      "retrieval_miss": [],
+      "citation_miss": [
+        "law-90b",
+        "bepyo-02-okunai-shoukasen",
+        "bepyo-24-hijouden-jikahatsu"
+      ]
+    },
+    {
+      "id": "cd-03",
+      "retrieval_doc_recall": 0.0,
+      "doc_recall": 0.0,
+      "retrieval_miss": [
+        "kikai-shiyousho-r7",
+        "law-91b"
+      ],
+      "citation_miss": [
+        "kikai-shiyousho-r7",
+        "law-91b"
+      ]
+    },
+    {
+      "id": "cd-04",
+      "retrieval_doc_recall": 0.0,
+      "doc_recall": 0.0,
+      "retrieval_miss": [
+        "kaishu-kenchiku-r7",
+        "nipponpaint-kaishu"
+      ],
+      "citation_miss": [
+        "kaishu-kenchiku-r7",
+        "nipponpaint-kaishu"
+      ]
+    },
+    {
+      "id": "cd-05",
+      "retrieval_doc_recall": 1.0,
+      "doc_recall": 1.0,
+      "retrieval_miss": [],
+      "citation_miss": []
+    },
+    {
+      "id": "cd-06",
+      "retrieval_doc_recall": 0.6667,
+      "doc_recall": 0.6667,
+      "retrieval_miss": [
+        "law-90c"
+      ],
+      "citation_miss": [
+        "law-90c"
+      ]
+    },
+    {
+      "id": "cd-07",
+      "retrieval_doc_recall": 0.0,
+      "doc_recall": 0.0,
+      "retrieval_miss": [
+        "law-92",
+        "iji-kanri-manual-h20"
+      ],
+      "citation_miss": [
+        "law-92",
+        "iji-kanri-manual-h20"
+      ]
+    },
+    {
+      "id": "cd-08",
+      "retrieval_doc_recall": 0.0,
+      "doc_recall": 0.0,
+      "retrieval_miss": [
+        "dengi-kaishaku",
+        "setsubi-sekkei-kijun-r6"
+      ],
+      "citation_miss": [
+        "dengi-kaishaku",
+        "setsubi-sekkei-kijun-r6"
+      ]
+    }
+  ],
+  "b_observations": [
+    {
+      "id": "cd-09",
+      "boundary_keywords_detected": [
+        "守備範囲外"
+      ],
+      "has_boundary_declaration": true
+    },
+    {
+      "id": "cd-10",
+      "boundary_keywords_detected": [
+        "守備範囲外",
+        "規定がない"
+      ],
+      "has_boundary_declaration": true
+    }
+  ],
+  "total_cost_usd": 0.027
+}

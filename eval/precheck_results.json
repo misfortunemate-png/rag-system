@@ -1,0 +1,155 @@
+[
+  {
+    "id": "cd-01",
+    "part": "A",
+    "expected_docs": [
+      "kaishu-denki-r7",
+      "kenchiku-shiyousho-r7",
+      "law-91b"
+    ],
+    "found_in_top20": [
+      "kaishu-denki-r7",
+      "kenchiku-shiyousho-r7"
+    ],
+    "missing_from_top20": [
+      "law-91b"
+    ],
+    "all_hit": false
+  },
+  {
+    "id": "cd-02",
+    "part": "A",
+    "expected_docs": [
+      "law-90b",
+      "bepyo-02-okunai-shoukasen",
+      "bepyo-24-hijouden-jikahatsu"
+    ],
+    "found_in_top20": [
+      "bepyo-02-okunai-shoukasen",
+      "bepyo-24-hijouden-jikahatsu"
+    ],
+    "missing_from_top20": [
+      "law-90b"
+    ],
+    "all_hit": false
+  },
+  {
+    "id": "cd-03",
+    "part": "A",
+    "expected_docs": [
+      "kikai-shiyousho-r7",
+      "law-91b"
+    ],
+    "found_in_top20": [
+      "kikai-shiyousho-r7",
+      "law-91b"
+    ],
+    "missing_from_top20": [],
+    "all_hit": true
+  },
+  {
+    "id": "cd-04",
+    "part": "A",
+    "expected_docs": [
+      "kaishu-kenchiku-r7",
+      "nipponpaint-kaishu"
+    ],
+    "found_in_top20": [
+      "kaishu-kenchiku-r7",
+      "nipponpaint-kaishu"
+    ],
+    "missing_from_top20": [],
+    "all_hit": true
+  },
+  {
+    "id": "cd-05",
+    "part": "A",
+    "expected_docs": [
+      "law-89a",
+      "law-89b",
+      "bepyo-24-hijouden-jikahatsu"
+    ],
+    "found_in_top20": [
+      "law-89a",
+      "law-89b",
+      "bepyo-24-hijouden-jikahatsu"
+    ],
+    "missing_from_top20": [],
+    "all_hit": true
+  },
+  {
+    "id": "cd-06",
+    "part": "A",
+    "expected_docs": [
+      "law-90c",
+      "bepyo-16-yuudoutou",
+      "bepyo-25-1-hijouden-chikudenchi"
+    ],
+    "found_in_top20": [
+      "law-90c",
+      "bepyo-16-yuudoutou",
+      "bepyo-25-1-hijouden-chikudenchi"
+    ],
+    "missing_from_top20": [],
+    "all_hit": true
+  },
+  {
+    "id": "cd-07",
+    "part": "A",
+    "expected_docs": [
+      "law-92",
+      "iji-kanri-manual-h20"
+    ],
+    "found_in_top20": [
+      "law-92",
+      "iji-kanri-manual-h20"
+    ],
+    "missing_from_top20": [],
+    "all_hit": true
+  },
+  {
+    "id": "cd-08",
+    "part": "A",
+    "expected_docs": [
+      "dengi-kaishaku",
+      "setsubi-sekkei-kijun-r6"
+    ],
+    "found_in_top20": [
+      "dengi-kaishaku",
+      "setsubi-sekkei-kijun-r6"
+    ],
+    "missing_from_top20": [],
+    "all_hit": true
+  },
+  {
+    "id": "cd-09",
+    "part": "B",
+    "expected_docs": [
+      "kouzou-sekkei-shiryou-r3",
+      "kenchiku-shiyousho-r7",
+      "kikai-shiyousho-r7"
+    ],
+    "found_in_top20": [
+      "kouzou-sekkei-shiryou-r3",
+      "kikai-shiyousho-r7"
+    ],
+    "missing_from_top20": [
+      "kenchiku-shiyousho-r7"
+    ],
+    "all_hit": false
+  },
+  {
+    "id": "cd-10",
+    "part": "B",
+    "expected_docs": [
+      "kaishu-kenchiku-r7",
+      "kikai-shiyousho-r7"
+    ],
+    "found_in_top20": [
+      "kaishu-kenchiku-r7",
+      "kikai-shiyousho-r7"
+    ],
+    "missing_from_top20": [],
+    "all_hit": true
+  }
+]

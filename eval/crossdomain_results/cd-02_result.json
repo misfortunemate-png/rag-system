@@ -1,0 +1,53 @@
+{
+  "id": "cd-02",
+  "part": "A",
+  "question": "屋内消火栓設備の非常電源として自家発電設備を用いる場合、法令上の要件と、点検時に確認すべき項目は何か。",
+  "expected_docs": [
+    "law-90b",
+    "bepyo-02-okunai-shoukasen",
+    "bepyo-24-hijouden-jikahatsu"
+  ],
+  "retrieval_doc_recall": 1.0,
+  "doc_recall": 0.0,
+  "retrieval_hit": [
+    "law-90b",
+    "bepyo-02-okunai-shoukasen",
+    "bepyo-24-hijouden-jikahatsu"
+  ],
+  "retrieval_miss": [],
+  "citation_hit": [],
+  "citation_miss": [
+    "law-90b",
+    "bepyo-02-okunai-shoukasen",
+    "bepyo-24-hijouden-jikahatsu"
+  ],
+  "retrieved_chunk_ids": [
+    "bepyo-02-okunai-shoukasen-0007",
+    "bepyo-02-okunai-shoukasen-0001",
+    "bepyo-24-hijouden-jikahatsu-0001",
+    "bepyo-02-okunai-shoukasen-0019",
+    "bepyo-02-okunai-shoukasen-0018",
+    "bepyo-24-hijouden-jikahatsu-0014",
+    "bepyo-28-package-shouka-0001",
+    "bepyo-16-yuudoutou-0002",
+    "bepyo-29-package-jidou-0001",
+    "bepyo-02-okunai-shoukasen-0016",
+    "bepyo-02-okunai-shoukasen-0005",
+    "bepyo-24-hijouden-jikahatsu-0002",
+    "law-90c-44",
+    "law-90b-33",
+    "law-90b-41",
+    "law-90c-43"
+  ],
+  "cited_chunk_ids": [],
+  "answer": "当該質問は、屋内消火栓設備の非常電源として自家発電設備を用いる場合における「法令上の要件」と「点検時に確認すべき項目」を問うものです。\n\nしかし、これは消防法及び関係政令・省令・告示（消防法施行令第11条、消防法施行規則第12条、消防庁告示で定める点検基準等）の解釈・適用に関する事項であり、当スコープ内の文書群（公共建築工事標準仕様書、建築設備設計基準、積算基準、保全業務共通仕様書等）の守備範囲外です。\n\nしたがって、当スコープ内文書には該当規定が見当たりません。法令上の技術基準や点検基準については、消防法令（消防法、同施行令、同施行規則、消防庁告示等）を直接ご参照ください。",
+  "planner_output": "質問タイプ: 比較確認\nターゲット: 消防法施行令第12条、別表第24「非常電源（自家発）」\nクエリ1: 非常電源 自家発 屋内消火栓 要件\nクエリ2: 別表第24 点検 項目\nクエリ3: 屋内消火栓 非常電源\nadvisor_recommended: false\nrelevant_domains: [\"消防\"]",
+  "loops": 7,
+  "elapsed_s": 124.5,
+  "total_input_tokens": 78399,
+  "total_output_tokens": 5657,
+  "cost_usd": 0.007072,
+  "boundary_keywords_detected": [
+    "守備範囲外"
+  ]
+}

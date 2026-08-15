@@ -1,0 +1,33 @@
+{
+  "id": "cd-08",
+  "part": "A",
+  "question": "受変電設備を設ける電気室の設計にあたり、機器の離隔・保有距離と部屋の広さ・構造について適用される基準を挙げよ。",
+  "expected_docs": [
+    "dengi-kaishaku",
+    "setsubi-sekkei-kijun-r6"
+  ],
+  "retrieval_doc_recall": 0.0,
+  "doc_recall": 0.0,
+  "retrieval_hit": [],
+  "retrieval_miss": [
+    "dengi-kaishaku",
+    "setsubi-sekkei-kijun-r6"
+  ],
+  "citation_hit": [],
+  "citation_miss": [
+    "dengi-kaishaku",
+    "setsubi-sekkei-kijun-r6"
+  ],
+  "retrieved_chunk_ids": [],
+  "cited_chunk_ids": [],
+  "answer": "質問の内容は、受変電設備を設ける電気室の設計における機器の離隔・保有距離や部屋の広さ・構造に関する基準の提示を求めるものです。しかし、本システムが参照可能な現スコープ内文書（公共建築工事標準仕様書、建築基準法、消防法、電気事業法関連文書等）には、電気室の機器離隔や保有距離、室の広さ・構造を直接規定する条項は見当たりません。\n\nこれらの事項は、主に「電気設備の技術基準（電技）」「内線規程」「発変電規定」などの専門技術基準や、建築主事・消防当局との協議、個別設計条件に基づいて定められるものであり、本スコープ内文書の守備範囲外です。\n\nしたがって、本システムでは適切な基準を提示できません。必要に応じて、関連する法令・規格（電気事業法に基づく技術基準、日本電気協会の内線規程、発変電所の設計基準等）を別途ご参照ください。",
+  "planner_output": "質問タイプ: オープン\nターゲット: 電気設備の技術基準の解釈（第2章 受変電設備）、建築設備設計基準（第5章 電気設備）\nクエリ1: 受変電設備 離隔 距離 電気室 基準\nクエリ2: 電気室 広さ 構造 設計基準\nクエリ3: 受変電設備 保有距離 離隔距離 技術基準\nadvisor_recommended: true\nrelevant_domains: [\"電気\", \"設計\"]",
+  "loops": 1,
+  "elapsed_s": 14.3,
+  "total_input_tokens": 6393,
+  "total_output_tokens": 1371,
+  "cost_usd": 0.000831,
+  "boundary_keywords_detected": [
+    "守備範囲外"
+  ]
+}

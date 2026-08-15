@@ -86,7 +86,22 @@ def _build_loop_system(plan_section: str, scope_text: str) -> str:
 - 素材収集が完了したらツール呼び出しを終了すること（回答は不要）"""
 
 
-def _build_composer_system(style_instruction: str, scope_text: str) -> str:
+def _build_composer_system(
+    style_instruction: str, scope_text: str, zero_result_mode: bool = False
+) -> str:
+    if zero_result_mode:
+        structure_rules = """\
+厳守事項（検索未到達モード — 所蔵チャンク取得数=0）:
+1. 検索未到達の告知: 「今回の検索ではX回検索しましたが、所蔵文書から関連する記述を取得できませんでした」と冒頭に正直に記載する。取得チャンクがないため §1「所蔵から言えること」は書けない。条番号・文書名・チャンクIDを架空で補完することは厳禁。
+2. 所蔵にないこと（推定）: 質問対象がコーパス外である可能性、またはクエリ語彙とコーパス語彙の不一致の可能性を説明する。利用者が自分で調べるための参照先・検索キーワードを提示する。
+3. 推論で補えること: 一般知識・法規の一般原則からの推論は「推論」ラベル付きで記載してよい。"""
+    else:
+        structure_rules = """\
+厳守事項（三部構成の標準形）:
+1. 所蔵から言えること: 収集された条文素材に根拠がある部分は、チャンク引用付きで回答すること
+2. 所蔵にないこと: 「所蔵文書に特段の規定がない」形式で明示し、あるべき規範領域を名指しすること。参照先の名称・検索キーワード等、利用者が自分で調べるための手がかりを必ず添えること
+3. 推論で補えること: 法規の一般原則・物理法則・規定の目的からの推論を「推論」ラベル付きで提示してよい。裏取りのない断定はしない"""
+
     return f"""\
 あなたは所蔵文書を参照する調べ物係です。
 利用者は分野を往来する実務家です。「分野が違うので分かりません」は最も言ってはならない言葉です。
@@ -95,10 +110,7 @@ def _build_composer_system(style_instruction: str, scope_text: str) -> str:
 
 {style_instruction}
 
-厳守事項（三部構成の標準形）:
-1. 所蔵から言えること: 収集された条文素材に根拠がある部分は、チャンク引用付きで回答すること
-2. 所蔵にないこと: 「所蔵文書に特段の規定がない」形式で明示し、あるべき規範領域を名指しすること。参照先の名称・検索キーワード等、利用者が自分で調べるための手がかりを必ず添えること
-3. 推論で補えること: 法規の一般原則・物理法則・規定の目的からの推論を「推論」ラベル付きで提示してよい。裏取りのない断定はしない
+{structure_rules}
 
 禁止事項（違反は回答失敗と同等）:
 - 謝罪表現（「申し訳ありません」「ご不便をおかけします」等）の使用
@@ -560,17 +572,28 @@ def _run_loop(
 def _build_composer_user_msg(
     question: str, chunks_text: str, advisor_conclude_reason: str | None = None,
     advisor_missing_coverage: str | None = None,
+    valid_chunk_ids: list[str] | None = None,
 ) -> str:
+    if valid_chunk_ids:
+        id_list = "\n".join(f"- {cid}" for cid in valid_chunk_ids)
+        citation_guard = (
+            f"\n【引用可能なチャンクIDの一覧（これ以外のIDを角括弧・鍵括弧いずれの形式でも引用しないこと）】\n{id_list}\n"
+        )
+    else:
+        citation_guard = (
+            "\n【注意: 取得チャンク0件】架空のチャンクID・文書名・条番号を引用形式（[...]・【...】）で一切記載しないこと。\n"
+        )
+
     if advisor_conclude_reason:
         note = f"アドバイザー所見: {advisor_conclude_reason}"
         if advisor_missing_coverage:
             note += f"（不足領域: {advisor_missing_coverage}）"
         return (
             f"質問: {question}\n\n{note}\n"
-            "収集済み素材から言えることを回答し、不足は三部構成の形式で明示すること。\n\n"
-            f"--- 収集した条文素材 ---\n{chunks_text}"
+            "収集済み素材から言えることを回答し、不足は三部構成の形式で明示すること。\n"
+            f"{citation_guard}\n--- 収集した条文素材 ---\n{chunks_text}"
         )
-    return f"質問: {question}\n\n--- 収集した条文素材 ---\n{chunks_text}"
+    return f"質問: {question}\n{citation_guard}\n--- 収集した条文素材 ---\n{chunks_text}"
 
 
 def _run_composer(
@@ -583,11 +606,14 @@ def _run_composer(
     client = make_client(config.composer_model)
 
     style_instr = _STYLE_INSTRUCTIONS.get(config.answer_style, _STYLE_INSTRUCTIONS["standard"])
-    system = _build_composer_system(style_instr, scope_text)
+    zero_result = not all_chunks
+    system = _build_composer_system(style_instr, scope_text, zero_result_mode=zero_result)
 
     chunks_text = _format_chunks_for_composer(all_chunks) if all_chunks else "（検索結果なし）"
+    valid_ids = [c["chunk_id"] for c in all_chunks] if all_chunks else []
     user_msg = _build_composer_user_msg(
-        question, chunks_text, advisor_conclude_reason, advisor_missing_coverage
+        question, chunks_text, advisor_conclude_reason, advisor_missing_coverage,
+        valid_chunk_ids=valid_ids,
     )
 
     resp = client.chat([{"role": "user", "text": user_msg}], [], system)
@@ -628,11 +654,14 @@ def make_composer_stream(
     client = make_client(config.composer_model)
 
     style_instr = _STYLE_INSTRUCTIONS.get(config.answer_style, _STYLE_INSTRUCTIONS["standard"])
-    system = _build_composer_system(style_instr, scope_text)
+    zero_result = not all_chunks
+    system = _build_composer_system(style_instr, scope_text, zero_result_mode=zero_result)
 
     chunks_text = _format_chunks_for_composer(all_chunks) if all_chunks else "（検索結果なし）"
+    valid_ids = [c["chunk_id"] for c in all_chunks] if all_chunks else []
     user_msg = _build_composer_user_msg(
-        question, chunks_text, advisor_conclude_reason, advisor_missing_coverage
+        question, chunks_text, advisor_conclude_reason, advisor_missing_coverage,
+        valid_chunk_ids=valid_ids,
     )
 
     full_text_holder = [""]

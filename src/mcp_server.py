@@ -237,6 +237,32 @@ def read_section(doc_slug: str, hierarchy: str) -> str:
     from src.tools import read_section as _read
     return _read(doc_slug=doc_slug, hierarchy=hierarchy)
 
+@mcp.tool()
+def web_search_tool(query: str, num_results: int = 3) -> list[dict]:
+    """Webを検索し、格付け付きの結果を返す。"""
+    from src.web_search import web_search
+    from src.web_fetch import fetch_and_extract
+    from src.config import load_config
+
+    config = load_config()
+    search_results = web_search(query, num_results=num_results, backend=config.web_search_backend)
+    results = []
+    for sr in search_results:
+        url = sr.get("url", "")
+        if not url:
+            continue
+        fetched = fetch_and_extract(url)
+        results.append({
+            "url": url,
+            "title": fetched.get("title") or sr.get("title", ""),
+            "snippet": sr.get("snippet", ""),
+            "tier": fetched["tier"],
+            "tier_label": fetched["tier_label"],
+            "text": fetched.get("text", ""),
+        })
+    return results
+
+
 # ── Agent layer ───────────────────────────────────────────────────────────────
 
 

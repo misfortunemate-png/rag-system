@@ -83,6 +83,9 @@ class AgentConfig:
     selected_doc_ids: list | None = None
     # M5b: domain検索フィルタ（None = 全domain対象）
     selected_domains: list | None = None
+    # M6-1: Web照合
+    web_search_enabled: bool = True
+    web_search_backend: str = "duckduckgo"
 
 
 def load_config() -> AgentConfig:

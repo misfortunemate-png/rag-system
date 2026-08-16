@@ -1,8 +1,8 @@
 ---
-version: "M5b"
-badge: "M5b完了・クローズ・PM検収待ち"
-next: "M5c（ローカルMCPサーバー化）— 指示書発行待ち"
-waiting_on: "PM検収（m5b-6-completion.md）"
+version: "M6-1"
+badge: "M6-1完了・完了報告提出中（PM検収待ち）"
+next: "M6-2（Web照合 eval・品質検証）"
+waiting_on: "PM検収（m6-1-completion.md）"
 ---
 
 # rag-system 現在地
@@ -12,29 +12,35 @@ waiting_on: "PM検収（m5b-6-completion.md）"
 ## 状態
 
 - M1〜M5b 全フェーズ完了・検収済み
-- **M5b-6（空答対処・M5bクローズ）: W-1〜W-3実施・完了報告提出中（PM検収待ち）**
-- 次マイルストーン: M5c（ローカルMCPサーバー化）— 指示書待ち
+- M5c（ローカルMCPサーバー化）: 完了・検収済み
+- **M6-1（Web照合ツール実装・パイプライン統合）: W-1〜W-7実施・完了報告提出中（PM検収待ち）**
+- 次マイルストーン: M6-2（Web照合 eval・品質検証）— 指示書待ち
 
-## M5b 最終結果（M5b-6 topk5）
+## M6-1 実施結果（疎通確認）
 
-- A部（8問）: avg_retrieval_doc_recall=0.7917、avg_doc_recall=0.7292
-- 空答: 0問 ✅（W-1 リトライ実地確認、cd-06 / 回帰 Q1 で発動）
-- citation gap（ret>0 かつ cit=0）: 0問 ✅
-- 回帰: 10/10 ✅
+- web_search（DuckDuckGo）: 3件取得 ✅
+- fetch_and_extract + tier判定: mlit.go.jp → tier=1 ✅
+- パイプライン統合: _run_web_search_stage 動作確認・クラッシュなし ✅
+- パイプラインOFF: M5b同等動作 ✅
+- MCPツール web_search_tool: 疎通確認 ✅
 
-## M5b 全フェーズ通し主要成果
+## M6-1 追加実装
 
-| フェーズ | 主要成果 |
-|----------|---------|
-| M5b-3 | クロスドメイン eval 整備・瞬間死発覚 |
-| M5b-4 | アドバイザー再設計・三部構成・瞬間死ゼロ |
-| M5b-5 | domain絞り込み無効化・cd-03 到達回復・cd-10 幻覚引用ゼロ |
-| M5b-6 | 空答リトライ（W-1）・topk=5 既定・空答ゼロ |
+| 項目 | 内容 |
+|---|---|
+| W-1 | src/web_search.py (Google/DuckDuckGo/SearXNG) |
+| W-2 | src/web_fetch.py (trafilatura + BS4 fallback) |
+| W-3 | data/web_tiers.yaml (tier_1: go.jp系 5ドメイン) |
+| W-4 | agent.py パイプライン統合（advisor conclude 発動） |
+| W-5 | mcp_server.py web_search_tool |
+| W-6 | トレース記録・eval JSON に web_search_used / web_results |
 
-## 技術スタック（M5b完了時点）
+## 技術スタック（M6-1完了時点）
 
 - 検索: ruri-v3-310m(dense) + fugashi+BM25 → RRF → ruri-v3-reranker-310m（top_k=5 既定）
-- エージェント: Planner(domain絞り込みなし) → Execution Loop → [Mid/Post-loop Advisor] → Composer
+- エージェント: Planner(domain絞り込みなし) → Execution Loop → [Mid/Post-loop Advisor] → **[Web照合]** → Composer
+- Web照合: 発動条件=アドバイザーconclude+missing_coverage / バックエンド=DuckDuckGo既定（Google/SearXNG切替可）
+- 三層格付け: tier_1（官公庁等）/ tier_2（技術解説系）/ tier_3（その他）
 - 三部構成: 所蔵から言えること / 所蔵にないこと / 推論で補えること
 - ゼロ件モード: 検索未到達告知 + 推定 + 推論（W-8）
 - 空答ガード: コンポーザー空答リトライ（1回）→ 定型文フォールバック

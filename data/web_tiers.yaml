@@ -1,16 +1,389 @@
-# 三層格付けドメインリスト（初期版・調査プロジェクトで随時追加）
-# tier 1: 官公庁・JIS・業界団体・メーカー公式（根拠引用可）
-# tier 2: 商社・技術解説サイト（引用可・突合推奨）
-# tier 3: 個人ブログ・掲示板・その他（参考情報のみ・根拠引用不可）
+# Web照合 三層格付けリスト
+# 更新日: 2026-08-16
+# 格納先: rag-system/data/web_tiers.yaml
+#
+# ─── タグ定義 ───────────────────────────────────────────
+# LLMが検索で取得したURLを応答に引用する際は、タグを必ず併記すること。
+# 例: 「能美防災公式（【tier-2：仕様書】）によれば…」
+#
+# 【tier-1：法令原文】
+#   法令・告示の条文テキストを直接取得できるエンドポイント。根拠として引用可。
+#
+# 【tier-2：仕様書】
+#   メーカー発行の仕様書・施工説明書・カタログスペック。
+#   正式名称・規格・寸法・型番が記載されているもの。
+#   特定製品の仕様値を根拠として引用可。
+#
+# 【tier-3：独自知見】
+#   法規に依存しない設計・施工判断の独自知見を持つ専門家コンテンツ。
+#   「なぜその手法か・何が起きるか・どう選ぶか」まで踏み込んでいること。
+#   専門家の見解として引用可。
+#
+# 【tier-3-2：引用列挙のみ】
+#   規程の条文・箇条書きを転記・整理しているだけ。
+#   専門家にとって新たな判断材料を提供しない。
+#   引用禁止。
+#
+# 【tier-3-4：過度の一般化リスクあり】
+#   専門用語の平易な言い換えや規程に基づく推論を行うが、
+#   断言できない事項を断言する傾向があり信頼度が限定的。
+#   「〇〇では△△と述べているが確認を要する（【tier-3-4：過度の一般化リスクあり】）」
+#   のように明示した上で補助的に参照するにとどめる。
+# ────────────────────────────────────────────────────────
+
 tier_1:
-  - "go.jp"
-  - "jisc.go.jp"
-  - "mlit.go.jp"
-  - "fdma.go.jp"
-  - "jis.go.jp"
-  # 業界団体・メーカー公式は調査プロジェクトで追加
+  # 条件: エンドポイントから法令・告示の条文テキストを直接取得できること
+  # 認証不要。短時間大量アクセスおよび全法令ループ取得は禁止。
 
-tier_2: []
-  # 商社・技術解説は調査プロジェクトで追加
+  - tag: "【tier-1：法令原文】"
+    endpoint: "https://laws.e-gov.go.jp/api/1/lawdata/{法令ID}"
+    description: >
+      e-Gov法令API v1。現行法令の全文XMLを無認証で取得可。
+      主要法令（IDは law_list_endpoint で確認）:
+        建築基準法         325AC0000000201
+        建築基準法施行令   325CO0000000338
+        消防法             323AC1000000186
+        電気事業法         339AC0000000170
+        労働安全衛生法     347AC0000000057
+        省エネ法           347AC0000000049
+        水道法             332AC0000000177
+        下水道法           333AC0000000079
+    law_list_endpoint: "https://laws.e-gov.go.jp/api/1/lawlists/1"
+    output_format: "XML（条・項・号単位で構造化済み）"
+    auth: "不要"
+    rate_limit: "あり。1件ずつインターバルを設けること"
+    verified: true
 
-# tier_3は明示列挙しない。tier_1・tier_2に該当しないドメインは自動的にtier_3扱い
+  - tag: "【tier-1：法令原文】"
+    endpoint: "https://laws.e-gov.go.jp/api/2/"
+    description: >
+      e-Gov法令API v2（2025-03リリース）。
+      キーワード検索・改正履歴取得・JSON形式出力（試行版）に対応。
+      仕様書: https://laws.e-gov.go.jp/api/2/swagger-ui
+    output_format: "XML / JSON（試行版）"
+    auth: "不要"
+    verified: true
+
+tier_2:
+  # 条件:
+  #   - 仕様書・施工説明書・カタログスペックのPDFまたはHTMLを直接取得できること
+  #   - 正式名称・規格（JIS等）・寸法・型番を含むこと
+  #   - モノタロウ等の集約販売サイトは不可
+  # B材（鋼管・電線等）は代表メーカー1件のみ登録
+  # 高額・仕様差異大（TOTO/LIXILのトイレ等）は複数登録可
+
+  # ── 鋼管（電線管・配管用）─ 丸一鋼管 ──
+  - tag: "【tier-2：仕様書】"
+    url: "https://www.maruichikokan.co.jp/products/349/"
+    category: "鋼製電線管"
+    content: >
+      鋼製電線管（G管・C管・E管）の規格・寸法表。
+      JIS C 8305準拠。厚鋼電線管（G16〜G104）・薄鋼電線管（C19〜C75）・
+      ねじなし電線管（E19〜E75）の外径・外径許容差・近似厚さ・長さ・重量をHTML表で掲載。
+      個別仕様書PDFおよびカタログPDFへの直リンクあり。
+    login_required: false
+    note: "G/C/E管の寸法表をHTML上で直接確認可。ポリエチレンライニング鋼管（PE管）はhttps://www.maruichikokan.co.jp/products/353/"
+    verified: true
+
+  - tag: "【tier-2：仕様書】"
+    url: "https://www.maruichikokan.co.jp/products/343/"
+    category: "配管用炭素鋼鋼管 SGP"
+    content: >
+      配管用炭素鋼鋼管（SGP）の機械的性質・伸び規定。
+      JIS G 3452準拠。管種記号SGP、引張強さ290N/mm2以上、製造寸法6A〜500A。
+      ただし外径・肉厚の寸法表はHTML上に掲載なし（カタログPDFに収録）。
+    login_required: false
+    note: "機械的性質のみHTML確認可。外径・肉厚寸法はカタログPDF（https://www.maruichikokan.co.jp/wp/wp-content/uploads/2025/01/product-04.pdf）を参照"
+    verified: true
+
+  # ── 石膏ボード ─ 吉野石膏 ──
+  - tag: "【tier-2：仕様書】"
+    url: "https://yoshino-gypsum.com/tpc/list_spec"
+    category: "石膏ボード"
+    content: >
+      吉野石膏 全製品の規格区分・寸法一覧。JIS A 6901準拠。
+      GB-R（タイガーボード）、GB-F（強化）、GB-S（シージング）、GB-D（化粧）、
+      GB-R-H（普通硬質）、GB-St（構造用）、GB-NC（不燃積層）、GB-L（ラスボード）等、
+      各製品の厚さ（7/9.5/12.5/15/21/25mm）と版サイズ（3×6/3×8/3×9/メートル版等）をHTML表で掲載。
+      準不燃・不燃認定番号（QM-9828、NM-8619等）も記載。
+    login_required: false
+    verified: true
+
+  # ── 電線・ケーブル ─ フジクラ・ダイヤケーブル ──
+  - tag: "【tier-2：仕様書】"
+    url: "https://www.fujikura-dia.co.jp/products/specification.php"
+    category: "電力ケーブル・制御ケーブル"
+    content: >
+      フジクラ・ダイヤケーブル 全品種の仕様書PDFリスト。
+      電力系: IV・HIV・600V CV・CVD・CVT・CVQ・CVS・3300V CV/CVT・6600V CV/CVT・
+               6600V CV(EE)/CVT(EE)・EM系（CE/F・CET/F等）・NH-FP（耐火）・EM-FP
+      制御計装用: CVV・CVV-S・FCPEV
+      防災: HP-F・AEV-F
+      各品番に仕様書番号（SES-XXXXX）と直接PDFリンクが付与されている。
+    login_required: false
+    note: "PDFは直接URLアクセス可。例: https://www.fujikura-dia.co.jp/pdf/specification/SES-00043.pdf（600V CV）"
+    verified: true
+
+  # ── 感知器 ─ 能美防災 ──
+  - tag: "【tier-2：仕様書】"
+    url: "https://www.nohmi.co.jp/shoninzu/shoninzu_index.html"
+    category: "自動火災報知設備 感知器（機器図面インデックス）"
+    content: >
+      能美防災 自動火災報知設備 機器図面データのカテゴリ一覧。
+      熱感知器（差動式スポット型・定温式・熱アナログ式）、
+      煙感知器（光電式スポット型・イオン化式等）、
+      炎感知器、ガス漏れ感知器、受信機・制御盤等を収録。
+      各ページから型番別に仕様（種別・設置方式）と外観図PDFへの直リンクが取得可。
+    login_required: false
+    note: "個別型番ページ例: 差動式スポット型一般型 https://www.nohmi.co.jp/shoninzu/006/006-0003.html"
+    verified: true
+
+  - tag: "【tier-2：仕様書】"
+    url: "https://www.nohmi.co.jp/shoninzu/006/006-0003.html"
+    category: "差動式スポット型感知器（一般型）"
+    content: >
+      能美防災 差動式スポット型感知器（一般型）の機器図面一覧。
+      型番: FDPJ106-R/U（1種）、FDPJ206-R/U（2種）、FDPJ226N-DW（防水型）等。
+      各型番の仕様（種・露出/埋込・オプション）と外観図PDFへの直リンクあり。
+    login_required: false
+    verified: true
+
+  - tag: "【tier-2：仕様書】"
+    url: "https://www.nohmi.co.jp/shoninzu/007/007-0001.html"
+    category: "光電式スポット型感知器"
+    content: >
+      能美防災 光電式スポット型感知器の機器図面一覧。
+      型番: FDKJ156N（1種）、FDKJ256N（2種）、各露出/埋込型。
+      各型番の仕様と外観図PDFへの直リンクあり。
+    login_required: false
+    verified: true
+
+  # ── 衛生器具（大便器）─ TOTO ──
+  - tag: "【tier-2：仕様書】"
+    url: "https://www.com-et.com/jp/page/toilet/"
+    category: "大便器 TOTO（商品情報インデックス）"
+    content: >
+      TOTO COM-ET トイレゾーンの全製品インデックス。
+      腰掛便器（ネオレストNX/LS/AS/RS・GGA・ピュアレストEX/QR等）、
+      パブリック向け便器（フラッシュタンク式・フラッシュバルブ式・壁掛式）、
+      小便器、便座（アプリコット・SS等）のCAD・カタログ・商品図・施工説明書へのリンクを一覧表示。
+      各製品の排水位置・取付寸法・洗浄水量が商品図PDFで確認可。
+    login_required: false
+    note: >
+      COM-ET自体はログイン不要でアクセス可。
+      ただし個別の商品図・施工説明書PDFのダウンロードはログイン要否が未確認。
+      会員登録は無料。
+    verified: true
+
+  # ── 衛生器具（大便器）─ LIXIL ──
+  - tag: "【tier-2：仕様書】"
+    url: "https://iinavi.inax.lixil.co.jp/products/toiletroom/"
+    category: "大便器 LIXIL INAX（商品情報）"
+    content: >
+      LIXIL INAXビジネスユーザー向けサイト「いいナビ」のトイレゾーン。
+      品番から取扱説明書・施工説明書・取替用部品資料を検索可。
+      SATIS・DT系・組み合わせ便器等の寸法図・施工仕様を収録。
+    login_required: false
+    note: >
+      【重要】robots.txtによりボット/スクリプトからの自動アクセスが禁止されている。
+      機械的フェッチ不可。手動でのデータ確認のみ可。
+      TOTOと仕様が大きく異なるため（排水方式・洗浄方式・取付寸法）両社掲載が有効。
+    verified: false
+    access_restriction: "robots.txt disallowed"
+
+  # ── 電設資材・照明 ─ パナソニック ──
+  - tag: "【tier-2：仕様書】"
+    url: "https://www2.panasonic.biz/ls/sumai/manual/"
+    category: "住宅設備・建材の施工説明書"
+    content: >
+      パナソニック 住宅設備・建材の商品仕様図・取扱説明書・施工説明書。
+      対象: キッチン・バスルーム・洗面・トイレ・内装収納・外まわり・給湯機器。
+      品番または品名から検索しPDF直接ダウンロード可。
+    login_required: false
+    note: "検索UIはJS依存。VAソリューションカタログの一部機能は会員登録が必要"
+    verified: true
+
+  - tag: "【tier-2：仕様書】"
+    url: "https://www2.panasonic.biz/jp/catalog/lighting/products/"
+    category: "照明器具の施工説明書"
+    content: >
+      パナソニック 照明器具の施工説明書・仕様図・BIMデータ。
+      品番・キーワード検索でPDF直接ダウンロード可。
+      器具スペック・配光データ・取付寸法・重量を収録。
+    login_required: false
+    verified: true
+
+  - tag: "【tier-2：仕様書】"
+    url: "https://www2.panasonic.biz/scvb/a2A/zumenMainList.G01?system_id=scva&category_cd=CTGD90009"
+    category: "電設資材・空調・住宅設備の統合図面検索"
+    content: >
+      パナソニック 電設資材・照明・空調・住宅設備の仕様図・施工説明書を品番で統合検索。
+      分電盤・配線器具・幹線機器・空調機の外形図・施工図・接続図・仕様一覧を収録。
+    login_required: false
+    note: "検索UIはJS依存。品番確定時はPDF URLを直接構築して取得可"
+    verified: true
+
+  # ── 未検証（次回調査予定） ──
+  # 塩ビ管（VP/VU）: 積水化学 eslontimes.com はPDFのみ・ログイン不要か不明
+  #   候補: https://www.eslontimes.com/product/build/250/
+  # ダイキン業務用エアコン: 技術資料ページ未特定
+  # 東芝ライテック: 施工説明書DLページ未特定
+  # ホーチキ: 技術資料DLページ未特定
+
+tier_3:
+  # 条件（すべて満たすこと）:
+  #   1. 特定の法令・規範に依存しない設計・施工の判断知見を含む
+  #   2. HTMLまたはPDFとして本文テキストを直接取得可能（認証不要）
+  #   3. 匿名可。文章全体に権威と独自性が認められること
+  #   4. ドメインではなく個別URLで登録
+  #   5. 「読んだ後に設計判断が変わるか」を採否の最終基準とする
+
+  # ── 電気設備設計（electric-facilities.jp）──
+  # 2009〜継続更新。電気設備設計者による個人運営。
+  # 「なぜその手法か・何が起きるか・どう選ぶか」まで踏み込む。
+  # 認証不要・全文HTML取得可。
+
+  - tag: "【tier-3：独自知見】"
+    url: "https://electric-facilities.jp/denki4/"
+    content: >
+      電気設備設計の基礎知識カテゴリ。幹線設計・ケーブル選定・配線器具計画・
+      電線管の使い分け・電圧降下計算・接地設計・分電盤設計。
+      配下の個別記事（例: /denki4/haikan.html）が本体。
+    access: "認証不要・全文HTML取得可"
+
+  - tag: "【tier-3：独自知見】"
+    url: "https://electric-facilities.jp/denki4/haikan.html"
+    content: >
+      電線管の種類と規格。占積率の設計原則・電流減少係数・
+      金属管の磁気的不平衡による発熱メカニズム・コンクリート打込み時の被り厚さ干渉・
+      CD管の法的解釈（電線管工事 vs 保護管路）・FEP管の選定境界（呼径28mm超）・
+      支持間隔・接地要件・CV-1C多条敷設時の合成樹脂管選定の根拠。
+    access: "認証不要・全文HTML取得可"
+
+  - tag: "【tier-3：独自知見】"
+    url: "https://electric-facilities.jp/denki8/"
+    content: "受変電設備設計・保護装置選定・保護リレーの種類と整定方法"
+    access: "認証不要・全文HTML取得可"
+
+  - tag: "【tier-3：独自知見】"
+    url: "https://electric-facilities.jp/denki9/"
+    content: "非常用照明・誘導灯・自動火災報知設備・非常用発電機・防災蓄電池の設計"
+    access: "認証不要・全文HTML取得可"
+
+  - tag: "【tier-3：独自知見】"
+    url: "https://electric-facilities.jp/denki5/"
+    content: "電話・LAN・テレビ共聴・構内通信・電気時計・避雷設備の設計"
+    access: "認証不要・全文HTML取得可"
+
+  - tag: "【tier-3：独自知見】"
+    url: "https://electric-facilities.jp/denki6/"
+    content: "電力ケーブル・通信ケーブル・光ファイバーの特徴・選定根拠・用途別比較"
+    access: "認証不要・全文HTML取得可"
+
+  - tag: "【tier-3：独自知見】"
+    url: "https://electric-facilities.jp/denki7/"
+    content: "電気設備用語辞典。機器・材料・技術・指標・単位を使用場面と選定根拠を含めて解説"
+    access: "認証不要・全文HTML取得可"
+
+  # ── 電気技術解説（日本電気技術者協会 JEEA）──
+  # 公益社団法人JEEAによる解説。電技省令・解釈の条文を実務視点で再構成。
+
+  - tag: "【tier-3：独自知見】"
+    url: "https://jeea.or.jp/course/"
+    content: >
+      JEEA音声付き電気技術解説講座インデックス。
+      電気数学・理論・法規・電気安全・需要設備・送配電等の体系的技術解説。
+      配下の個別講座（/course/contents/NNNNN/）が本体。
+    access: "認証不要・全文HTML取得可"
+
+  - tag: "【tier-3：独自知見】"
+    url: "https://jeea.or.jp/course/contents/11107/"
+    content: >
+      低圧屋内配線の工事方法。がいし引き工事・金属管工事・ケーブル工事の施設要件・
+      最小導体径の根拠・弱電流電線との離隔距離・
+      メタルラス造営材貫通時の処置と漏電経路の説明。
+      電技省令第57条・第62条・解釈第144条・第157〜167条を根拠として明示。
+    access: "認証不要・全文HTML取得可"
+
+  # ── 建築設備計算（建築設備ラボ: kenchikusetubisekkei.com）──
+  # 2021〜継続更新。建築設備設計者による個人運営。
+  # 給水・給湯・排水・空調・換気・排煙の計算手順と設計判断を体系的に解説。
+  # electric-facilities.jpより文章深度はやや浅いが、
+  # 計算根拠の提示と配管計画のOK/NG判断を含む点でtier-3基準を満たす。
+
+  - tag: "【tier-3：独自知見】"
+    url: "https://kenchikusetubisekkei.com/48-calculation/"
+    content: >
+      建築設備計算記事インデックス。
+      給水量算定・給水管径・給湯・排水管径・通気管・空調熱負荷・
+      加湿量・換気風量・ダクトサイズ・静圧計算・排煙・結露・騒音の計算手順一覧。
+      配下の個別記事が本体。
+    access: "認証不要・全文HTML取得可"
+
+  - tag: "【tier-3：独自知見】"
+    url: "https://kenchikusetubisekkei.com/56-ventpipeplan/"
+    content: >
+      通気管の配管計画。排水横管からの通気管取り出し角度（頂部から45°以内の根拠）・
+      横枝管の接続高さ（最高位器具あふれ縁より150mm以上の根拠）・
+      通気弁（ドルゴ）の採用条件と排水槽への適用禁止理由（正圧緩和機構がないため）・
+      通気口の離隔基準。
+    access: "認証不要・全文HTML取得可"
+
+  - tag: "【tier-3：独自知見】"
+    url: "https://kenchikusetubisekkei.com/18-water-calculation/"
+    content: >
+      管均等表による横枝管給水管径の算定手順。
+      器具の給水負荷単位換算・同時使用率・口径決定の手順。
+    access: "認証不要・全文HTML取得可"
+
+  - tag: "【tier-3：独自知見】"
+    url: "https://kenchikusetubisekkei.com/27-duct-size/"
+    content: >
+      ダクトサイズの決め方。摩擦抵抗線図から風量・流速・ダクト径を求める計算手順。
+      空調・換気両対応。
+    access: "認証不要・全文HTML取得可"
+
+  - tag: "【tier-3：独自知見】"
+    url: "https://kenchikusetubisekkei.com/36-smoke-exhaust/"
+    content: >
+      機械排煙の排煙機選定と風量算定。ダクト径までつなぐ計算手順。
+    access: "認証不要・全文HTML取得可"
+
+negative_examples:
+  # LLMが検索で取得した場合のタグ付与指針。
+  # 「このサイトでは〜と述べている（【tier-3-2：引用列挙のみ】）」のように
+  # タグを明示した上で補足情報として言及するにとどめること。
+  # このセクションのURLは根拠引用に使用しない。
+
+  # ── tier-3-2: 引用列挙のみ ──
+
+  - tag: "【tier-3-2：引用列挙のみ】"
+    url: "https://kenshoku-bank.com/column/1596/"
+    judgment: >
+      建設業求人サイトの集客コラム。「分電盤とは」から始まり3部位を羅列して終わる。
+      φ（ファイ）を「パイ」と読ませるなど書き手が電気の専門家でないことが明白。
+      記述は全般的に不正確。専門家にとって情報価値ゼロ。
+
+  - tag: "【tier-3-2：引用列挙のみ】"
+    url: "https://www.yonashin-home.net/blog/electric-facilities-material/jyutakubundenban/naisenkitei/"
+    judgment: >
+      電設資材通販サイトのブログ。内線規程1365-1の条文を抜粋・列挙し
+      「トイレはNG・押入はNG」をQ&A化しただけ。設計判断を含まない。
+      記事末尾に分電盤販売ページへのリンクがあり集客目的が主。
+
+  # ── tier-3-4: 過度の一般化リスクあり ──
+
+  - tag: "【tier-3-4：過度の一般化リスクあり】"
+    url: "https://www2.panasonic.biz/jp/basics/electric/breakers/residential-panelboard-about/"
+    judgment: >
+      パナソニックによる一般消費者向けの概説コンテンツ。
+      電力供給系統の流れを図解で正確に説明するが、設計判断を含む情報はない。
+      LLMが既に持つ一般知識の範囲内。専門家向けではなく判断材料にならない。
+
+  - tag: "【tier-3-4：過度の一般化リスクあり】"
+    url: "https://progress-company.jp/blog/20260318/"
+    judgment: >
+      電気工事会社の採用誘導ブログ。分電盤の構成・費用相場・業者選びを幅広く扱うが、
+      「分電盤の寿命は13年」（根拠・条件の説明なし）など断言できない事項を断言する。
+      部分的に正確な情報を含むが一般化リスクがあり、引用には裏付けを要する。
+

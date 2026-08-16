@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 
 JOB_COST_CAP = float(os.environ.get("MCP_JOB_COST_CAP", "0.10"))
 DAILY_COST_CAP = float(os.environ.get("MCP_DAILY_COST_CAP", "1.00"))
+DAILY_QUERY_LIMIT = int(os.environ.get("MCP_DAILY_QUERY_LIMIT", "50"))
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 
@@ -63,6 +64,28 @@ def _log(event: str, **fields) -> None:
     with _log_lock:
         with open(log_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+def _daily_query_count() -> int:
+    """Count job_submitted events in today's log file."""
+    today = datetime.now().strftime("%Y-%m-%d")
+    log_path = LOGS_DIR / f"{today}.log"
+    if not log_path.exists():
+        return 0
+    count = 0
+    with _log_lock:
+        with open(log_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                    if entry.get("event") == "job_submitted":
+                        count += 1
+                except Exception:
+                    pass
+    return count
 
 
 def _daily_cost() -> float:
@@ -302,6 +325,16 @@ def submit_question(question: str, style: str = "standard", domains: list[str] |
     global _pending_count
 
     question = question[:2000]
+
+    # Daily query limit check
+    daily_count = _daily_query_count()
+    if daily_count >= DAILY_QUERY_LIMIT:
+        return {
+            "error": "daily_limit",
+            "daily_count": daily_count,
+            "limit": DAILY_QUERY_LIMIT,
+            "message": f"本日の実行上限（{DAILY_QUERY_LIMIT}回）に達しました。明日以降に再試行してください。",
+        }
 
     # Daily cap check
     daily = _daily_cost()

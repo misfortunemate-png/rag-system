@@ -1,131 +1,223 @@
-# MCP Remote セットアップ手順書（Tailscale Funnel + claude.ai）
+# rag-system リモートセットアップ手順書
 
-作成日: 2026-08-16 ／ 対象: フランのWindowsデスクトップ
-
-## 概要
-
-`mcp_server.py --transport sse` でSSE HTTPサーバーを起動し、Tailscale Funnelで公開、claude.aiのカスタムコネクタから接続する。
+作成日: 2026-08-17 ／ 対象: フランのWindowsデスクトップ（M7b-2対応版）
 
 ---
 
-## 1. auth_tokens.yaml の作成
+## 1. 概要
 
-### 1-1. トークン生成
+rag-systemには3種類のアクセス経路がある。
 
-ターミナルで以下を実行し、各IDに1つずつトークンを生成する:
+| 経路 | プロトコル | ポート | 対象 |
+|---|---|---|---|
+| MCP（SSE / Streamable HTTP） | HTTPS | 8443 | claude.ai・ChatGPT・CLIクライアント |
+| ブラウザUI（Streamlit） | HTTPS | 10000 | ゲスト・ブラウザ利用者 |
+| stdioローカル | 標準入出力 | — | Claude Codeローカル利用 |
+
+---
+
+## 2. 前提
+
+- **フラン**（Windows デスクトップ）でサーバーが起動していること
+- **Tailscale**がインストール・ログイン済みであること（ホスト名: `fraine.tail204746.ts.net`）
+- `data/auth_tokens.yaml`が作成済みであること（後述）
+
+### 2-1. auth_tokens.yaml のセットアップ
+
+トークン生成:
 
 ```
 .\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
-3回実行して3つのトークン文字列を控えておく。
-
-### 1-2. ファイル作成
-
-`data\auth_tokens.yaml.example` を `data\auth_tokens.yaml` にコピーし、トークン値を置き換える:
+`data\auth_tokens.yaml.example` を `data\auth_tokens.yaml` にコピーし、トークン値を設定する:
 
 ```yaml
 tokens:
   - id: "shougo"
-    token: "（1-1で生成したトークン1）"
+    token: "（生成したトークン）"
 
   - id: "claude-ai"
-    token: "（1-1で生成したトークン2）"
+    token: "（生成したトークン）"
 
   - id: "guest-demo"
-    token: "（1-1で生成したトークン3）"
+    token: "（生成したトークン）"
     expires: "2026-09-01"
 ```
 
 - `data/auth_tokens.yaml` は `.gitignore` に登録済み。**絶対にコミットしないこと。**
-- `expires` フィールドは省略可。設定した場合、その日を過ぎると自動で無効化される。
+- `expires` は省略可。設定した場合、その翌日から自動無効化される。
 
 ---
 
-## 2. start-mcp-remote.bat の実行
+## 3. Tailscale Funnel 設定（三ポート構成）
 
-プロジェクトルートで:
+chat-pwaが443を使用中のため、MCP（8443）とゲストUI（10000）を別ポートで公開する。
+
+```
+tailscale funnel --bg --https=443 http://127.0.0.1:8787
+tailscale funnel --bg --https=8443 http://127.0.0.1:8766
+tailscale funnel --bg --https=10000 http://127.0.0.1:8501
+```
+
+設定確認:
+
+```
+tailscale serve status
+```
+
+出力に3ポートすべて `(Funnel on)` が表示されれば正常。
+
+**注意:** `tailscale serve` と `tailscale funnel` を同一ポートに混在させると競合する。`funnel` コマンド一発で設定すること。
+
+---
+
+## 4. サーバー起動
+
+### 4-1. MCPサーバー
 
 ```
 .\start-mcp-remote.bat
 ```
 
-成功すると以下のような出力が表示される:
+または:
 
 ```
-[rag-system MCP] SSEモードで起動します
-[rag-system MCP] ポート         : 8766
-[rag-system MCP] SSEエンドポイント: http://0.0.0.0:8766/sse
-[rag-system MCP] 有効トークンID  : ['shougo', 'claude-ai', 'guest-demo']
-[rag-system MCP] Tailscale Funnel: tailscale serve --bg --https 8443 http://127.0.0.1:8766 && tailscale funnel --bg 8443
+.\.venv\Scripts\python.exe -m src.mcp_server --transport http
 ```
 
----
-
-## 3. Tailscale Funnel の有効化
-
-ポート443はchat-pwaが使用中のため、HTTPS 8443で公開する。別のターミナルで:
+### 4-2. Streamlit（ゲストUI）
 
 ```
-tailscale serve --bg --https 8443 http://127.0.0.1:8766
-tailscale funnel --bg 8443
+.\start.bat
 ```
 
-公開URL:
+または:
 
 ```
-https://fraine.tail204746.ts.net:8443
+.\.venv\Scripts\python.exe -m streamlit run app.py --server.port 8501
 ```
 
 ---
 
-## 4. claude.ai カスタムコネクタの追加手順
+## 5. MCP接続手順 — claude.ai
 
-1. **claude.ai** にログインする
+1. claude.ai にログインする
 2. 画面右上のアカウントアイコン → **設定** → **コネクタ** を開く
-3. **コネクタを追加** → **カスタム** → **Web（HTTP SSE）** を選択
-4. **URL** に以下を入力:
+3. **コネクタを追加** → **カスタム** → URL に以下を入力:
+
    ```
    https://fraine.tail204746.ts.net:8443/sse
    ```
-5. **保存** して接続テストを実行する
 
-> **注意**: M7a追補以降、claude.aiはOAuth 2.1フローを自動実行する。  
-> Bearer tokenの手動入力は不要。claude.aiが以下のフローを自動処理する:
->
-> 1. `GET /.well-known/oauth-authorization-server` でメタデータ取得
-> 2. `POST /register` でclient登録（client_secret = claude-ai用トークン）
-> 3. `GET /authorize` で認可コード取得（自動承認・PKCE S256）
-> 4. `POST /token` でアクセストークン取得
-> 5. 以降のSSEリクエストに `Authorization: Bearer {token}` を自動付与
+4. 保存するとブラウザにアクセストークン入力画面が開く
+5. `data/auth_tokens.yaml` に登録したトークン文字列を入力 → 接続完了
 
-### モバイルアプリ
-
-claude.aiで設定したコネクタは、**同じアカウントでログインしたモバイルアプリにも自動的に反映される**。追加設定は不要。
+モバイルアプリでも同じアカウントのコネクタが自動で使える（追加設定不要）。
 
 ---
 
-## 5. ゲストへのトークン発行と期限管理
+## 6. MCP接続手順 — ChatGPT
 
-1. `data/auth_tokens.yaml` に新しいエントリを追加する:
-   ```yaml
-   - id: "guest-suzuki"
-     token: "（新しく生成したトークン）"
-     expires: "2026-10-01"    # 期限を明示的に設定する
+1. 設定 → Apps → Advanced settings → **Developer Mode** を ON にする
+2. 設定 → Connectors → **Create** を開く
+3. URL に以下を入力:
+
    ```
-2. `.\start-mcp-remote.bat` を再起動する（設定は起動時に読み込む）
-3. ゲストにトークン文字列を安全な方法で共有する（Slackのダイレクトメッセージ等）
+   https://fraine.tail204746.ts.net:8443/sse
+   ```
 
-期限切れのトークンはサーバー起動時に自動的に無効化される（yaml から削除する必要はない）。
+   （`/mcp` でも可）
+4. OAuth承認画面でアクセストークンを入力
 
 ---
 
-## 6. トークンローテーション手順
+## 7. MCP接続手順 — Antigravity CLI / ローカルクライアント
 
-1. 新しいトークンを生成する（`secrets.token_urlsafe(32)`）
-2. `data/auth_tokens.yaml` の該当エントリの `token` 値を新しいものに更新する
-3. サーバーを再起動する（`.\start-mcp-remote.bat`）
-4. **claude.ai のコネクタ設定** → Request Headers の `Authorization` 値を新しいトークンに更新する
+Bearer トークンをヘッダーに直接設定する:
+
+```
+Authorization: Bearer {token}
+```
+
+例（curl）:
+
+```
+curl -H "Authorization: Bearer {token}" \
+  https://fraine.tail204746.ts.net:8443/sse
+```
+
+---
+
+## 8. ブラウザUI（ゲスト向け）
+
+URL:
+
+```
+https://fraine.tail204746.ts.net:10000
+```
+
+アクセスするとトークン入力画面が表示される。ゲスト用トークンを入力してログイン。
+
+ゲストモードでは以下が非表示（閲覧のみ）:
+- モデル・パラメータ設定
+- コスト・処理時間の表示
+- デバッグ情報
+
+---
+
+## 9. ゲスト招待手順
+
+1. トークン生成:
+
+   ```
+   .\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(32))"
+   ```
+
+2. `data/auth_tokens.yaml` に追記（IDは `guest-` で始める・`expires` 設定推奨）:
+
+   ```yaml
+   - id: "guest-yamada"
+     token: "（生成したトークン）"
+     expires: "2026-10-01"
+   ```
+
+3. サーバーを再起動（設定は起動時に読み込む）
+
+4. ゲストに渡すもの:
+   - URL: `https://fraine.tail204746.ts.net:10000`
+   - トークン文字列（Slack DM等で安全に共有）
+
+---
+
+## 10. トークン管理
+
+### 追加
+
+`data/auth_tokens.yaml` にエントリを追記してサーバーを再起動する。
+
+### 失効・無効化
+
+`expires` を過去日に設定するか、エントリを削除してサーバーを再起動する。
+
+### ローテーション
+
+1. 新しいトークンを生成する
+2. `data/auth_tokens.yaml` の該当エントリの `token` 値を更新する
+3. サーバーを再起動する
+4. 接続クライアント側のトークンも更新する（claude.aiはコネクタ再登録が必要な場合あり）
+
+---
+
+## 11. トラブルシューティング
+
+| 症状 | 確認事項 |
+|---|---|
+| 接続できない | Tailscale が起動中か、Funnel が3ポートすべて有効か確認（`tailscale serve status`） |
+| 認証失敗 | `data/auth_tokens.yaml` の token 値が正確か、`expires` が未来日か確認 |
+| ゲストUIが開かない | `start.bat` が起動済みか（ポート8501）、Funnel 10000番が有効か確認 |
+| 日次上限エラー | 翌日まで待つ。緊急時は `.env` の `MCP_DAILY_QUERY_LIMIT` を増やしてサーバー再起動 |
+| `daily_limit` エラー（MCP） | 同上 |
 
 ---
 
@@ -137,5 +229,5 @@ claude.aiで設定したコネクタは、**同じアカウントでログイン
 | ブルートフォース検知 | 同一 IP で 1 分以内に 5 回認証失敗 |
 | ブルートフォースブロック期間 | 10 分 |
 | 認証失敗時の遅延 | 3 秒 |
-| リクエストボディサイズ上限 | 1 MB |
-| 入力テキスト打ち切り | 質問文: 2,000字 / correction: 5,000字 / evidence: 2,000字 / query: 500字 |
+| 日次実行上限（既定） | 50 回（MCP・Streamlit合算）|
+| 入力テキスト打ち切り | 質問文: 2,000字 / correction: 5,000字 |

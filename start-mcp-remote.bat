@@ -1,4 +1,5 @@
 @echo off
+cd /d D:\AI\github\rag-system
 chcp 65001 > nul
 echo [rag-system MCP] SSE HTTP mode startup check...
 echo.

@@ -1,9 +1,14 @@
 """
-MCP Server for rag-system — stdio transport, three-layer tools.
+MCP Server for rag-system — stdio + SSE HTTP transport, three-layer tools.
 
 Material: list_documents / search_chunks / read_section
 Agent:    submit_question / get_answer
 Feedback: report_feedback
+Web:      web_search_tool / fetch_law
+
+Transport:
+  stdio (default): Claude Code ローカル利用
+  sse:             HTTP SSE — Tailscale Funnel経由で公開。Bearer認証必須。
 
 Concurrency guard (P-9): max 1 running, queue 2 waiting.
 Cost guards: per-job cap (MCP_JOB_COST_CAP, default $0.10),
@@ -11,6 +16,7 @@ Cost guards: per-job cap (MCP_JOB_COST_CAP, default $0.10),
 """
 from __future__ import annotations
 
+import collections
 import json
 import logging
 import os
@@ -31,6 +37,8 @@ load_dotenv()
 from mcp.server.mcpserver import MCPServer  # noqa: E402
 
 mcp = MCPServer("rag-system")
+
+logger = logging.getLogger(__name__)
 
 # ── Guards ────────────────────────────────────────────────────────────────────
 
@@ -227,6 +235,7 @@ def search_chunks(query: str, top_k: int = 5, domains: list[str] | None = None) 
     """条文テキストをハイブリッド検索（密ベクトル＋BM25＋リランキング）し関連チャンクを返す。domainsで検索対象分野を指定可能（例: ["消防","法令"]）。"""
     from src.tools import search_chunks as _search
     from src.config import load_config
+    query = query[:500]
     config = load_config()
     return _search(query=query, top_k=top_k, doc_ids=config.selected_doc_ids, domains=domains)
 
@@ -235,6 +244,10 @@ def search_chunks(query: str, top_k: int = 5, domains: list[str] | None = None) 
 def read_section(doc_slug: str, hierarchy: str) -> str:
     """条番号または階層パスで条文全文を返す。hierarchyには '1.7.3' のような条番号を指定する。"""
     from src.tools import read_section as _read
+    from src.config import load_documents_yaml
+    known_slugs = {d.get("id", "") for d in load_documents_yaml()}
+    if doc_slug not in known_slugs:
+        return f"エラー: doc_slug {doc_slug!r} はdocuments.yamlに存在しません。"
     return _read(doc_slug=doc_slug, hierarchy=hierarchy)
 
 @mcp.tool()
@@ -244,6 +257,7 @@ def web_search_tool(query: str, num_results: int = 3) -> list[dict]:
     from src.web_fetch import fetch_and_extract
     from src.config import load_config
 
+    query = query[:500]
     config = load_config()
     search_results = web_search(query, num_results=num_results, backend=config.web_search_backend)
     results = []
@@ -286,6 +300,8 @@ def submit_question(question: str, style: str = "standard", domains: list[str] |
     同時実行1・待機キュー2。超過時はerrorを返す。
     """
     global _pending_count
+
+    question = question[:2000]
 
     # Daily cap check
     daily = _daily_cost()
@@ -368,6 +384,9 @@ def report_feedback(job_id: str, verdict: str, correction: str = "", evidence: s
     if verdict not in valid_verdicts:
         return {"error": "invalid_verdict", "valid": sorted(valid_verdicts)}
 
+    correction = correction[:5000]
+    evidence = evidence[:2000]
+
     with _jobs_lock:
         job = _jobs.get(job_id)
     question = job.get("question", "") if job else ""
@@ -389,8 +408,222 @@ def report_feedback(job_id: str, verdict: str, correction: str = "", evidence: s
     _log("feedback_received", job_id=job_id, verdict=verdict)
     return {"accepted": True, "job_id": job_id}
 
+# ── HTTP SSE transport: auth / rate limiting ──────────────────────────────────
+
+# Rate limiting / brute-force state (module-level, guarded by _sec_lock)
+_sec_lock = threading.Lock()
+_rate_counters: dict[str, collections.deque] = {}   # IP -> deque of request timestamps
+_bf_failures: dict[str, collections.deque] = {}     # IP -> deque of failure timestamps
+_bf_blocks: dict[str, float] = {}                   # IP -> block-until epoch time
+
+# Auth token lookup: {token -> id}  (populated at startup, read-only after that)
+_AUTH_TOKENS: dict[str, str] = {}
+
+
+def _load_auth_tokens() -> dict[str, str]:
+    """Load data/auth_tokens.yaml. Returns {token -> id} map."""
+    import yaml
+    from datetime import date as _date
+
+    path = _PROJECT_ROOT / "data" / "auth_tokens.yaml"
+    if not path.exists():
+        raise FileNotFoundError(
+            "data/auth_tokens.yaml が見つかりません。"
+            "data/auth_tokens.yaml.example を参考にセットアップしてください。"
+        )
+
+    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    entries = raw.get("tokens", [])
+    if not entries:
+        raise ValueError("data/auth_tokens.yaml にトークンが定義されていません。")
+
+    today = _date.today()
+    result: dict[str, str] = {}
+    for entry in entries:
+        tid = str(entry.get("id", "")).strip()
+        token = str(entry.get("token", "")).strip()
+        expires_str = entry.get("expires")
+        if not tid or not token:
+            continue
+        if expires_str:
+            expires = _date.fromisoformat(str(expires_str))
+            if today > expires:
+                logger.info("auth: token id=%r expired (%s), skipping", tid, expires_str)
+                continue
+        result[token] = tid
+
+    if not result:
+        raise ValueError(
+            "data/auth_tokens.yaml に有効なトークンがありません（全期限切れの可能性）。"
+        )
+
+    return result
+
+
+class _AuthRateLimitMiddleware:
+    """ASGI middleware: rate limit → brute-force block → Bearer auth.
+
+    Thread-safe rate counters are shared across all requests.
+    auth failure → asyncio.sleep(3) to slow brute-force.
+    """
+
+    RATE_LIMIT = 10      # max requests per IP per minute
+    RATE_WINDOW = 60.0
+    BF_LIMIT = 5         # failures before temp block
+    BF_WINDOW = 60.0
+    BF_BLOCK_DURATION = 600.0   # 10 minutes
+
+    def __init__(self, app, tokens: dict[str, str]) -> None:
+        self.app = app
+        self.tokens = tokens
+
+    async def __call__(self, scope, receive, send) -> None:
+        if scope["type"] == "lifespan":
+            await self.app(scope, receive, send)
+            return
+
+        if scope["type"] not in ("http", "websocket"):
+            await self.app(scope, receive, send)
+            return
+
+        # Extract client IP
+        client = scope.get("client")
+        ip = client[0] if client else "unknown"
+
+        # 1. Brute-force block check
+        now = time.monotonic()
+        with _sec_lock:
+            block_until = _bf_blocks.get(ip, 0.0)
+        if now < block_until:
+            remaining = int(block_until - now)
+            _log("bf_blocked_request", ip=ip, remaining_s=remaining)
+            await self._send_error(send, 403, f"Blocked for {remaining}s")
+            return
+
+        # 2. Rate limit check
+        with _sec_lock:
+            q = _rate_counters.setdefault(ip, collections.deque())
+            cutoff = now - self.RATE_WINDOW
+            while q and q[0] < cutoff:
+                q.popleft()
+            if len(q) >= self.RATE_LIMIT:
+                _log("rate_limit_exceeded", ip=ip, count=len(q))
+                await self._send_error(send, 429, "Too Many Requests")
+                return
+            q.append(now)
+
+        # 3. Bearer token check
+        headers = {k.lower(): v for k, v in scope.get("headers", [])}
+        auth_bytes: bytes = headers.get(b"authorization", b"")
+        auth_str = auth_bytes.decode("utf-8", errors="replace")
+        if auth_str.startswith("Bearer "):
+            token = auth_str[len("Bearer "):].strip()
+        else:
+            token = ""
+
+        auth_id = self.tokens.get(token)
+        if not auth_id:
+            import asyncio
+            await asyncio.sleep(3)
+            with _sec_lock:
+                fq = _bf_failures.setdefault(ip, collections.deque())
+                cutoff = now - self.BF_WINDOW
+                while fq and fq[0] < cutoff:
+                    fq.popleft()
+                fq.append(now)
+                if len(fq) >= self.BF_LIMIT:
+                    block_until = time.monotonic() + self.BF_BLOCK_DURATION
+                    _bf_blocks[ip] = block_until
+                    _log("bf_block_set", ip=ip, duration_s=self.BF_BLOCK_DURATION)
+            _log("auth_failure", ip=ip)
+            await self._send_error(send, 401, "Unauthorized")
+            return
+
+        # 4. Success — attach auth_id to scope for downstream logging
+        ext = scope.setdefault("extensions", {})
+        ext["auth_id"] = auth_id
+        _log("auth_success", ip=ip, auth_id=auth_id)
+
+        await self.app(scope, receive, send)
+
+    @staticmethod
+    async def _send_error(send, status: int, message: str) -> None:
+        body = message.encode()
+        await send({
+            "type": "http.response.start",
+            "status": status,
+            "headers": [
+                (b"content-type", b"text/plain; charset=utf-8"),
+                (b"content-length", str(len(body)).encode()),
+            ],
+        })
+        await send({"type": "http.response.body", "body": body, "more_body": False})
+
+
+def _run_sse(port: int) -> None:
+    """Validate config, build the SSE ASGI app, and serve with uvicorn."""
+    global _AUTH_TOKENS
+
+    # Validate auth_tokens.yaml before binding the port
+    try:
+        _AUTH_TOKENS = _load_auth_tokens()
+    except (FileNotFoundError, ValueError) as e:
+        print(f"[ERROR] {e}")
+        raise SystemExit(1)
+
+    token_ids = list(_AUTH_TOKENS.values())
+    print(f"[rag-system MCP] SSEモードで起動します")
+    print(f"[rag-system MCP] ポート         : {port}")
+    print(f"[rag-system MCP] SSEエンドポイント: http://0.0.0.0:{port}/sse")
+    print(f"[rag-system MCP] 有効トークンID  : {token_ids}")
+    print(f"[rag-system MCP] Tailscale Funnel: tailscale funnel {port}")
+    print()
+
+    # Build SSE ASGI app (transport_security=None for 0.0.0.0)
+    from mcp.server.transport_security import TransportSecuritySettings
+    try:
+        sse_starlette = mcp.sse_app(
+            sse_path="/sse",
+            message_path="/messages/",
+            transport_security=TransportSecuritySettings(
+                enable_dns_rebinding_protection=False,
+            ),
+            host="0.0.0.0",
+        )
+    except TypeError:
+        # Older signature without host/transport_security kwargs
+        sse_starlette = mcp.sse_app()
+
+    # Wrap with auth + rate-limit middleware
+    asgi_app = _AuthRateLimitMiddleware(sse_starlette, _AUTH_TOKENS)
+
+    import uvicorn
+    uvicorn.run(
+        asgi_app,
+        host="0.0.0.0",
+        port=port,
+        log_level="warning",
+        limit_max_requests=None,
+    )
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.WARNING)
-    mcp.run(transport="stdio")
+    import argparse
+
+    parser = argparse.ArgumentParser(description="rag-system MCP server")
+    parser.add_argument(
+        "--transport",
+        choices=["stdio", "sse"],
+        default="stdio",
+        help="トランスポートモード (default: stdio)",
+    )
+    args = parser.parse_args()
+
+    if args.transport == "sse":
+        port = int(os.environ.get("MCP_HTTP_PORT", "8766"))
+        _run_sse(port)
+    else:
+        logging.basicConfig(level=logging.WARNING)
+        mcp.run(transport="stdio")

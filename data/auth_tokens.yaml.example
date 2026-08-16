@@ -1,0 +1,18 @@
+# data/auth_tokens.yaml — 本番ファイルは .gitignore 対象
+#
+# トークン生成コマンド:
+#   python -c "import secrets; print(secrets.token_urlsafe(32))"
+#
+# 上記コマンドで各IDのトークン文字列を生成し、下記プレースホルダーと置き換えてください。
+# ファイル名は auth_tokens.yaml に変更してください（拡張子 .example を外す）。
+
+tokens:
+  - id: "shougo"
+    token: "REPLACE_WITH_32_CHAR_RANDOM_TOKEN_1"
+
+  - id: "claude-ai"
+    token: "REPLACE_WITH_32_CHAR_RANDOM_TOKEN_2"
+
+  - id: "guest-demo"
+    token: "REPLACE_WITH_32_CHAR_RANDOM_TOKEN_3"
+    expires: "2026-09-01"    # YYYY-MM-DD形式。期限切れは自動無効化される。

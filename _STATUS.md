@@ -1,8 +1,8 @@
 ---
-version: "M6-2"
-badge: "M6-2完了・完了報告提出中（PM検収待ち）"
-next: "M6-3以降（PM指示書待ち）"
-waiting_on: "PM検収（m6-2-completion.md）"
+version: "M7a"
+badge: "M7a完了・完了報告提出中（PM検収待ち）"
+next: "M7b以降（PM指示書待ち）"
+waiting_on: "PM検収（m7a-completion.md）"
 ---
 
 # rag-system 現在地
@@ -11,33 +11,33 @@ waiting_on: "PM検収（m6-2-completion.md）"
 
 ## 状態
 
-- M1〜M5c 全フェーズ完了・検収済み
-- M6-1（Web照合ツール実装・パイプライン統合）: 完了・検収済み
-- **M6-2（格付けロジック改修・法令API統合）: W-1〜W-5実施・完了報告提出中（PM検収待ち）**
+- M1〜M6-2 全フェーズ完了・検収済み
+- **M7a（MCP HTTP化・認証・Tailscale Funnel）: W-1〜W-5実施・完了報告提出中（PM検収待ち）**
 - 次マイルストーン: PM指示書待ち
 
-## M6-2 実施結果
+## M7a 実施結果
 
-- tier判定ユニットテスト: 7/7 PASS ✅
-- e-Gov法令API疎通（建築基準法 325AC0000000201）: PASS ✅
-- 回帰eval（web_search_enabled=False, 10問）: 10/10 PASS ✅
+- SSE接続（有効トークン）: PASS ✅
+- 認証失敗（401）・ブロック（403）・レート制限（429）: PASS ✅
+- sleep(3)遅延: PASS (elapsed=3.0s) ✅
+- 入力サイズ打ち切り・doc_slugバリデーション: PASS ✅
+- stdio回帰: PASS ✅
+- Tailscale Funnel疎通: 発注者操作が必要（手順書 docs/mcp-remote-setup.md に記載）
 
-## M6-2 追加実装
+## M7a 追加実装
 
 | 項目 | 内容 |
 |---|---|
-| W-1 | src/web_fetch.py 完全書き直し（URL前方一致5段階tier判定、tag/verified/category付与） |
-| W-2 | fetch_law_text + LAW_ID_MAP（e-Gov法令API v1）、_run_web_search_stage に統合 |
-| W-3 | _format_web_results → tag形式出力、web_rules → tag引用ルール・tier-3-2/3-4追加 |
-| W-4 | mcp_server.py: web_search_tool にtag/verified/category追加、fetch_law ツール新設 |
-| W-5 | 検証eval（tier unit 7/7、法令API疎通、回帰10/10） |
+| W-1 | mcp_server.py: --transport sse 引数、SSE ASGIアプリ、uvicorn起動 |
+| W-2 | _AuthRateLimitMiddleware（Bearer認証・レート制限・ブルートフォース抑止）、入力truncation、doc_slugバリデーション |
+| W-3 | start-mcp-remote.bat、data/auth_tokens.yaml.example、.env.example/.gitignore更新 |
+| W-4 | docs/mcp-remote-setup.md（Tailscale Funnel・claude.ai・ゲスト管理・ローテーション手順） |
+| W-5 | HTTP疎通確認（9項目全PASS） |
 
-## 技術スタック（M6-2完了時点）
+## 技術スタック（M7a完了時点）
 
-- 検索: ruri-v3-310m(dense) + fugashi+BM25 → RRF → ruri-v3-reranker-310m（top_k=5 既定）
-- エージェント: Planner → Execution Loop → [Advisor] → **[Web照合 + 法令API]** → Composer
-- Web照合: 発動条件=アドバイザーconclude+missing_coverage / バックエンド=DuckDuckGo既定
-- 法令API: e-Gov法令API v1、法令名マッチで自動呼び出し（最大2件・1秒インターバル）
-- 格付け: web_tiers.yaml準拠（negative_examples → go.jp → tier_2前方一致 → tier_3前方一致 → 未分類）
-- 三部構成: 所蔵から言えること / 所蔵にないこと / 推論で補えること
-- ゼロ件モード・空答ガード・UI: M6-1から継続
+- 検索: ruri-v3-310m(dense) + fugashi+BM25 → RRF → ruri-v3-reranker-310m
+- エージェント: Planner → Loop → Advisor → Web照合（法令API含む） → Composer
+- **公開: SSE HTTP（0.0.0.0:8766）→ Tailscale Funnel → claude.ai カスタムコネクタ**
+- **認証: Bearer token（data/auth_tokens.yaml）・レート制限・ブルートフォース抑止**
+- stdio: Claude Codeローカル利用として引き続き動作

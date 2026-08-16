@@ -239,7 +239,7 @@ def read_section(doc_slug: str, hierarchy: str) -> str:
 
 @mcp.tool()
 def web_search_tool(query: str, num_results: int = 3) -> list[dict]:
-    """Webを検索し、格付け付きの結果を返す。"""
+    """Webを検索し、格付け付きの結果を返す（tag/verified/category付き）。"""
     from src.web_search import web_search
     from src.web_fetch import fetch_and_extract
     from src.config import load_config
@@ -258,9 +258,19 @@ def web_search_tool(query: str, num_results: int = 3) -> list[dict]:
             "snippet": sr.get("snippet", ""),
             "tier": fetched["tier"],
             "tier_label": fetched["tier_label"],
+            "tag": fetched.get("tag"),
+            "verified": fetched.get("verified"),
+            "category": fetched.get("category"),
             "text": fetched.get("text", ""),
         })
     return results
+
+
+@mcp.tool()
+def fetch_law(law_id: str) -> dict:
+    """e-Gov法令APIから法令条文を取得する。law_idはe-Gov法令API v1の法令ID（例: 325AC0000000201）。"""
+    from src.web_fetch import fetch_law_text
+    return fetch_law_text(law_id)
 
 
 # ── Agent layer ───────────────────────────────────────────────────────────────

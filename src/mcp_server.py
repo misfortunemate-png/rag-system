@@ -623,14 +623,13 @@ async def _oauth_metadata(request):
         "registration_endpoint": f"{base}/register",
         "response_types_supported": ["code"],
         "grant_types_supported": ["authorization_code"],
-        "token_endpoint_auth_methods_supported": ["client_secret_post"],
+        "token_endpoint_auth_methods_supported": ["none"],
         "code_challenge_methods_supported": ["S256"],
     })
 
 
 async def _oauth_register(request):
-    """POST /register — Dynamic Client Registration (RFC 7591)."""
-    import asyncio
+    """POST /register — Dynamic Client Registration (RFC 7591). No client_secret issued."""
     from starlette.responses import JSONResponse
 
     ip = (request.client[0] if request.client else "unknown")
@@ -645,46 +644,117 @@ async def _oauth_register(request):
         redirect_uris = [redirect_uris]
 
     client_id = "rag-system-client"
-    client_secret = _AUTH_TOKENS_BY_ID.get("claude-ai", "")
-    if not client_secret:
-        await asyncio.sleep(3)
-        _log("oauth_register_error", ip=ip, reason="no_claude_ai_token")
-        return JSONResponse({"error": "server_error"}, status_code=500)
-
     with _oauth_lock:
-        _oauth_clients[client_id] = {
-            "client_secret": client_secret,
-            "redirect_uris": redirect_uris,
-        }
+        _oauth_clients[client_id] = {"redirect_uris": redirect_uris}
 
     _log("oauth_register", ip=ip, client_name=client_name)
     return JSONResponse({
         "client_id": client_id,
-        "client_secret": client_secret,
         "client_name": client_name,
         "redirect_uris": redirect_uris,
     }, status_code=201)
 
 
+def _oauth_authorize_html(client_id: str, redirect_uri: str, state: str,
+                          code_challenge: str, code_challenge_method: str,
+                          error: str = "") -> str:
+    """Return the HTML approval-form page."""
+    import html as _html
+    def esc(s: str) -> str:
+        return _html.escape(str(s), quote=True)
+    err_html = f'<p class="error">{esc(error)}</p>' if error else ""
+    return f"""<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>規程エージェント MCPアクセス認可</title>
+<style>
+  body{{font-family:sans-serif;max-width:400px;margin:80px auto;padding:0 16px}}
+  h1{{font-size:1.2rem;margin-bottom:.5rem}}
+  p{{color:#555;margin-bottom:1rem}}
+  input[type=password]{{width:100%;padding:8px;font-size:1rem;border:1px solid #ccc;border-radius:4px;box-sizing:border-box}}
+  button{{margin-top:12px;padding:10px 24px;font-size:1rem;background:#1a56db;color:#fff;border:none;border-radius:4px;cursor:pointer}}
+  button:hover{{background:#1044b7}}
+  .error{{color:#c00;margin-top:8px}}
+</style>
+</head>
+<body>
+  <h1>規程エージェント MCPアクセス認可</h1>
+  <p>接続を許可するにはアクセストークンを入力してください</p>
+  {err_html}
+  <form method="POST" action="/authorize">
+    <input type="password" name="token" placeholder="アクセストークン" required autofocus>
+    <input type="hidden" name="client_id" value="{esc(client_id)}">
+    <input type="hidden" name="redirect_uri" value="{esc(redirect_uri)}">
+    <input type="hidden" name="state" value="{esc(state)}">
+    <input type="hidden" name="code_challenge" value="{esc(code_challenge)}">
+    <input type="hidden" name="code_challenge_method" value="{esc(code_challenge_method)}">
+    <button type="submit">許可する</button>
+  </form>
+</body>
+</html>"""
+
+
 async def _oauth_authorize(request):
-    """GET /authorize — Auto-approve authorization endpoint (PKCE required)."""
+    """GET/POST /authorize — Approval-screen authorization endpoint (PKCE S256)."""
+    import asyncio
     import secrets as _secrets
-    from starlette.responses import JSONResponse, RedirectResponse
+    from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
 
-    params = dict(request.query_params)
-    client_id = params.get("client_id", "")
-    redirect_uri = params.get("redirect_uri", "")
-    state = params.get("state", "")
-    code_challenge = params.get("code_challenge", "")
-    code_challenge_method = params.get("code_challenge_method", "S256")
+    ip = (request.client[0] if request.client else "unknown")
 
-    with _oauth_lock:
-        client_info = _oauth_clients.get(client_id)
+    if request.method == "GET":
+        params = dict(request.query_params)
+        client_id = params.get("client_id", "")
+        redirect_uri = params.get("redirect_uri", "")
+        state = params.get("state", "")
+        code_challenge = params.get("code_challenge", "")
+        code_challenge_method = params.get("code_challenge_method", "S256")
 
-    if not client_info:
-        return JSONResponse({"error": "unauthorized_client"}, status_code=400)
-    if redirect_uri and redirect_uri not in client_info.get("redirect_uris", []):
-        return JSONResponse({"error": "invalid_redirect_uri"}, status_code=400)
+        with _oauth_lock:
+            client_info = _oauth_clients.get(client_id)
+
+        if not client_info:
+            return JSONResponse({"error": "unauthorized_client"}, status_code=400)
+        if redirect_uri and redirect_uri not in client_info.get("redirect_uris", []):
+            return JSONResponse({"error": "invalid_redirect_uri"}, status_code=400)
+
+        return HTMLResponse(_oauth_authorize_html(
+            client_id, redirect_uri, state, code_challenge, code_challenge_method))
+
+    # POST: token submitted via form
+    try:
+        form = await request.form()
+        body = dict(form)
+    except Exception:
+        body = {}
+
+    token_input = str(body.get("token", "")).strip()
+    client_id = str(body.get("client_id", ""))
+    redirect_uri = str(body.get("redirect_uri", ""))
+    state = str(body.get("state", ""))
+    code_challenge = str(body.get("code_challenge", ""))
+    code_challenge_method = str(body.get("code_challenge_method", "S256"))
+
+    # Validate submitted token against token registry
+    token_id = _AUTH_TOKENS.get(token_input)
+    if not token_id:
+        await asyncio.sleep(3)
+        now = time.monotonic()
+        with _sec_lock:
+            fq = _bf_failures.setdefault(ip, collections.deque())
+            cutoff = now - _AuthRateLimitMiddleware.BF_WINDOW
+            while fq and fq[0] < cutoff:
+                fq.popleft()
+            fq.append(now)
+            if len(fq) >= _AuthRateLimitMiddleware.BF_LIMIT:
+                _bf_blocks[ip] = now + _AuthRateLimitMiddleware.BF_BLOCK_DURATION
+                _log("bf_block_set", ip=ip, source="authorize_endpoint")
+        _log("oauth_authorize_failure", ip=ip)
+        return HTMLResponse(_oauth_authorize_html(
+            client_id, redirect_uri, state, code_challenge, code_challenge_method,
+            error="トークンが無効です"))
 
     code = _secrets.token_urlsafe(32)
     with _oauth_lock:
@@ -694,15 +764,16 @@ async def _oauth_authorize(request):
             "code_challenge": code_challenge,
             "code_challenge_method": code_challenge_method,
             "expires_at": time.monotonic() + 60.0,
+            "token_id": token_id,
         }
 
-    _log("oauth_authorize", client_id=client_id)
+    _log("oauth_authorize", ip=ip, client_id=client_id, token_id=token_id)
     sep = "&" if "?" in redirect_uri else "?"
     return RedirectResponse(f"{redirect_uri}{sep}code={code}&state={state}", status_code=302)
 
 
 async def _oauth_token(request):
-    """POST /token — Token endpoint with client_secret + PKCE verification."""
+    """POST /token — Token endpoint (client auth: none, PKCE S256 required)."""
     import asyncio
     from starlette.responses import JSONResponse
 
@@ -716,7 +787,6 @@ async def _oauth_token(request):
     grant_type = body.get("grant_type", "")
     code = body.get("code", "")
     client_id = body.get("client_id", "")
-    client_secret = body.get("client_secret", "")
     code_verifier = body.get("code_verifier", "")
 
     def _fail(reason: str, status: int = 400):
@@ -726,22 +796,10 @@ async def _oauth_token(request):
     if grant_type != "authorization_code":
         return _fail("unsupported_grant_type")
 
-    # Validate client credentials
+    # Validate client exists (no secret check — token_endpoint_auth_methods = ["none"])
     with _oauth_lock:
         client_info = _oauth_clients.get(client_id)
-
-    if not client_info or client_info.get("client_secret") != client_secret:
-        await asyncio.sleep(3)
-        now = time.monotonic()
-        with _sec_lock:
-            fq = _bf_failures.setdefault(ip, collections.deque())
-            cutoff = now - _AuthRateLimitMiddleware.BF_WINDOW
-            while fq and fq[0] < cutoff:
-                fq.popleft()
-            fq.append(now)
-            if len(fq) >= _AuthRateLimitMiddleware.BF_LIMIT:
-                _bf_blocks[ip] = now + _AuthRateLimitMiddleware.BF_BLOCK_DURATION
-                _log("bf_block_set", ip=ip, source="token_endpoint")
+    if not client_info:
         return _fail("invalid_client", 401)
 
     # Validate authorization code (single-use, 60s expiry)
@@ -763,11 +821,13 @@ async def _oauth_token(request):
             await asyncio.sleep(3)
             return _fail("invalid_grant")
 
-    access_token = _AUTH_TOKENS_BY_ID.get("claude-ai", "")
+    # Issue access token for the token_id established at /authorize time
+    token_id = code_info.get("token_id", "")
+    access_token = _AUTH_TOKENS_BY_ID.get(token_id, "")
     if not access_token:
         return _fail("server_error", 500)
 
-    _log("oauth_token_issued", ip=ip, client_id=client_id)
+    _log("oauth_token_issued", ip=ip, client_id=client_id, token_id=token_id)
     return JSONResponse({
         "access_token": access_token,
         "token_type": "Bearer",
@@ -786,13 +846,17 @@ def _build_oauth_starlette(public_url: str):
     return Starlette(routes=[
         Route("/.well-known/oauth-authorization-server", _oauth_metadata, methods=["GET"]),
         Route("/register", _oauth_register, methods=["POST"]),
-        Route("/authorize", _oauth_authorize, methods=["GET"]),
+        Route("/authorize", _oauth_authorize, methods=["GET", "POST"]),
         Route("/token", _oauth_token, methods=["POST"]),
     ])
 
 
 class _OAuthSSEDispatcher:
-    """ASGI dispatcher: OAuth paths → oauth_app (no auth), others → auth-wrapped SSE app."""
+    """ASGI dispatcher: OAuth paths → oauth_app, /mcp → http_app, others → SSE app.
+
+    OAuth and Streamable HTTP apps bypass _AuthRateLimitMiddleware at the dispatcher
+    level; auth_sse and auth_http are each wrapped with their own middleware instance.
+    """
 
     _OAUTH_PATHS = frozenset({
         "/.well-known/oauth-authorization-server",
@@ -801,24 +865,77 @@ class _OAuthSSEDispatcher:
         "/token",
     })
 
-    def __init__(self, sse_app, oauth_app) -> None:
-        self._sse = sse_app    # wrapped with _AuthRateLimitMiddleware
-        self._oauth = oauth_app
+    def __init__(self, sse_app, oauth_app, http_app=None) -> None:
+        self._sse = sse_app      # auth-wrapped SSE (handles /sse, /messages/)
+        self._oauth = oauth_app  # OAuth endpoints (no auth wrapper)
+        self._http = http_app    # auth-wrapped Streamable HTTP (handles /mcp) or None
 
     async def __call__(self, scope, receive, send) -> None:
         if scope["type"] == "lifespan":
-            await self._sse(scope, receive, send)
+            await self._handle_lifespan(scope, receive, send)
             return
         if scope["type"] == "http":
             path = scope.get("path", "")
             if path in self._OAUTH_PATHS or path.startswith("/.well-known/"):
                 await self._oauth(scope, receive, send)
                 return
+            if self._http and (path == "/mcp" or path.startswith("/mcp/")):
+                await self._http(scope, receive, send)
+                return
         await self._sse(scope, receive, send)
 
+    async def _handle_lifespan(self, scope, receive, send) -> None:
+        """Fan ASGI lifespan events to all apps that need initialization."""
+        import asyncio
+        import anyio
 
-def _run_sse(port: int) -> None:
-    """Validate config, build the SSE ASGI app, and serve with uvicorn."""
+        apps = [a for a in (self._sse, self._http) if a is not None]
+        if len(apps) == 1:
+            await apps[0](scope, receive, send)
+            return
+
+        n = len(apps)
+        queues: list[asyncio.Queue] = [asyncio.Queue() for _ in apps]
+        startup_count = [0]
+        shutdown_count = [0]
+
+        async def _forward() -> None:
+            while True:
+                msg = await receive()
+                for q in queues:
+                    await q.put(msg)
+                if msg.get("type") == "lifespan.shutdown":
+                    break
+
+        async def _run_one(idx: int, app) -> None:
+            async def _recv():
+                return await queues[idx].get()
+
+            async def _send(msg) -> None:
+                t = msg.get("type", "")
+                if t == "lifespan.startup.complete":
+                    startup_count[0] += 1
+                    if startup_count[0] >= n:
+                        await send({"type": "lifespan.startup.complete"})
+                elif t == "lifespan.startup.failed":
+                    await send(msg)
+                elif t == "lifespan.shutdown.complete":
+                    shutdown_count[0] += 1
+                    if shutdown_count[0] >= n:
+                        await send({"type": "lifespan.shutdown.complete"})
+                elif t == "lifespan.shutdown.failed":
+                    await send(msg)
+
+            await app(scope, _recv, _send)
+
+        async with anyio.create_task_group() as tg:
+            tg.start_soon(_forward)
+            for i, app in enumerate(apps):
+                tg.start_soon(_run_one, i, app)
+
+
+def _run_http(port: int) -> None:
+    """Validate config, build SSE + Streamable HTTP ASGI apps, and serve with uvicorn."""
     global _AUTH_TOKENS, _AUTH_TOKENS_BY_ID
 
     # Validate auth_tokens.yaml before binding the port
@@ -831,37 +948,50 @@ def _run_sse(port: int) -> None:
 
     public_url = os.environ.get("MCP_PUBLIC_URL", "https://fraine.tail204746.ts.net:8443").rstrip("/")
     token_ids = list(_AUTH_TOKENS.values())
-    print(f"[rag-system MCP] SSEモードで起動します")
-    print(f"[rag-system MCP] ポート         : {port}")
-    print(f"[rag-system MCP] SSEエンドポイント: http://0.0.0.0:{port}/sse")
-    print(f"[rag-system MCP] 有効トークンID  : {token_ids}")
-    print(f"[rag-system MCP] Tailscale Funnel: tailscale funnel {port}")
-    print(f"[rag-system MCP] OAuth endpoints enabled (issuer: {public_url})")
-    print()
 
-    # Build SSE ASGI app (transport_security=None for 0.0.0.0)
     from mcp.server.transport_security import TransportSecuritySettings
+    ts = TransportSecuritySettings(enable_dns_rebinding_protection=False)
+
+    # ── SSE transport ──────────────────────────────────────────────────────────
     try:
         sse_starlette = mcp.sse_app(
             sse_path="/sse",
             message_path="/messages/",
-            transport_security=TransportSecuritySettings(
-                enable_dns_rebinding_protection=False,
-            ),
+            transport_security=ts,
             host="0.0.0.0",
         )
     except TypeError:
-        # Older signature without host/transport_security kwargs
         sse_starlette = mcp.sse_app()
 
-    # Wrap SSE with auth + rate-limit middleware
-    auth_sse = _AuthRateLimitMiddleware(sse_starlette, _AUTH_TOKENS)
+    # ── Streamable HTTP transport ──────────────────────────────────────────────
+    http_starlette = None
+    try:
+        http_starlette = mcp.streamable_http_app(
+            streamable_http_path="/mcp",
+            transport_security=ts,
+            host="0.0.0.0",
+        )
+    except Exception as exc:
+        print(f"[rag-system MCP] 警告: Streamable HTTP 無効 ({exc})")
 
-    # OAuth endpoints bypass auth middleware
+    # Wrap each transport with its own auth + rate-limit middleware instance
+    auth_sse = _AuthRateLimitMiddleware(sse_starlette, _AUTH_TOKENS)
+    auth_http = _AuthRateLimitMiddleware(http_starlette, _AUTH_TOKENS) if http_starlette else None
+
+    # OAuth endpoints (no auth middleware)
     oauth_app = _build_oauth_starlette(public_url)
 
-    # Dispatcher: OAuth paths → oauth_app, MCP paths → auth_sse
-    asgi_app = _OAuthSSEDispatcher(auth_sse, oauth_app)
+    # Top-level dispatcher
+    asgi_app = _OAuthSSEDispatcher(auth_sse, oauth_app, auth_http)
+
+    # Startup log
+    print(f"[rag-system MCP] HTTP モードで起動します")
+    print(f"[rag-system MCP] ポート         : {port}")
+    print(f"[rag-system MCP] エンドポイント  : /sse (SSE)" +
+          (f", /mcp (Streamable HTTP)" if http_starlette else " (/mcp 無効)"))
+    print(f"[rag-system MCP] 有効トークンID  : {token_ids}")
+    print(f"[rag-system MCP] OAuth endpoints enabled (issuer: {public_url})")
+    print()
 
     import uvicorn
     uvicorn.run(
@@ -881,15 +1011,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="rag-system MCP server")
     parser.add_argument(
         "--transport",
-        choices=["stdio", "sse"],
+        choices=["stdio", "http"],
         default="stdio",
         help="トランスポートモード (default: stdio)",
     )
     args = parser.parse_args()
 
-    if args.transport == "sse":
+    if args.transport == "http":
         port = int(os.environ.get("MCP_HTTP_PORT", "8766"))
-        _run_sse(port)
+        _run_http(port)
     else:
         logging.basicConfig(level=logging.WARNING)
         mcp.run(transport="stdio")

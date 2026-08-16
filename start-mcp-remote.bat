@@ -30,4 +30,4 @@ echo [rag-system MCP] Registered token IDs:
 echo.
 echo [rag-system MCP] Starting SSE server...
 
-.\.venv\Scripts\python.exe src\mcp_server.py --transport sse
+.\.venv\Scripts\python.exe src\mcp_server.py --transport http

@@ -1,43 +1,46 @@
 ---
-version: "M7a"
-badge: "M7a完了・完了報告提出中（PM検収待ち）"
-next: "M7b以降（PM指示書待ち）"
-waiting_on: "PM検収（m7a-completion.md）"
+version: "M7b-1"
+badge: "M7b-1完了・確認待ち"
+next: "M7b-2（W-3+W-4+W-5）"
+waiting_on: "PM検収（m7b-1-completion.md）"
 ---
 
 # rag-system 現在地
 
-更新: 2026-08-16 ／ 更新者: PG
+更新: 2026-08-17 ／ 更新者: PG
 
 ## 状態
 
-- M1〜M6-2 全フェーズ完了・検収済み
-- **M7a（MCP HTTP化・認証・Tailscale Funnel）: W-1〜W-5実施・完了報告提出中（PM検収待ち）**
-- 次マイルストーン: PM指示書待ち
+- M1〜M7a 全フェーズ完了・検収済み
+- **M7b-1（Streamable HTTP化・OAuth承認画面方式）: 実施・確認待ち**
+- 次マイルストーン: M7b-2（W-3+W-4+W-5）
 
-## M7a 実施結果
+## M7b-1 実施結果
 
-- SSE接続（有効トークン）: PASS ✅
-- 認証失敗（401）・ブロック（403）・レート制限（429）: PASS ✅
-- sleep(3)遅延: PASS (elapsed=3.0s) ✅
-- 入力サイズ打ち切り・doc_slugバリデーション: PASS ✅
-- stdio回帰: PASS ✅
-- Tailscale Funnel疎通: 発注者操作が必要（手順書 docs/mcp-remote-setup.md に記載）
-
-## M7a 追加実装
-
-| 項目 | 内容 |
+| テスト | 結果 |
 |---|---|
-| W-1 | mcp_server.py: --transport sse 引数、SSE ASGIアプリ、uvicorn起動 |
-| W-2 | _AuthRateLimitMiddleware（Bearer認証・レート制限・ブルートフォース抑止）、入力truncation、doc_slugバリデーション |
-| W-3 | start-mcp-remote.bat、data/auth_tokens.yaml.example、.env.example/.gitignore更新 |
-| W-4 | docs/mcp-remote-setup.md（Tailscale Funnel・claude.ai・ゲスト管理・ローテーション手順） |
-| W-5 | HTTP疎通確認（9項目全PASS） |
+| メタデータ（token_endpoint_auth_methods_supported=["none"]） | PASS ✅ |
+| /register（client_secret返さない） | PASS ✅ |
+| GET /authorize → HTML承認画面 | PASS ✅ |
+| POST /authorize 無効トークン → エラー再表示+3s遅延 | PASS ✅ |
+| POST /authorize 有効トークン → 302リダイレクト+code | PASS ✅ |
+| POST /token → access_token（token_idから取得） | PASS ✅ |
+| SSE接続（Bearer） | PASS ✅ |
+| Streamable HTTP /mcp（Bearer） | PASS ✅ |
+| stdio回帰（--transport {stdio,http}） | PASS ✅ |
+| 実機系（Tailscale・claude.ai） | 発注者依頼 |
 
-## 技術スタック（M7a完了時点）
+## M7b-1 実装内容
+
+| W | 内容 |
+|---|---|
+| W-1 | Streamable HTTP `/mcp` 追加（anyio lifespan fanout対応） |
+| W-2 | OAuth承認画面方式（D-1解消）: /authorize GET→HTML/POST→検証, /register client_secret除去, /token token_id対応 |
+
+## 技術スタック（M7b-1完了時点）
 
 - 検索: ruri-v3-310m(dense) + fugashi+BM25 → RRF → ruri-v3-reranker-310m
 - エージェント: Planner → Loop → Advisor → Web照合（法令API含む） → Composer
-- **公開: SSE HTTP（0.0.0.0:8766）→ Tailscale Funnel → claude.ai カスタムコネクタ**
-- **認証: Bearer token（data/auth_tokens.yaml）・レート制限・ブルートフォース抑止**
+- **公開: SSE `/sse` + Streamable HTTP `/mcp`（0.0.0.0:8766）→ Tailscale Funnel**
+- **認証: OAuth 2.1承認画面方式（auth_tokens.yaml統合）+ Bearer直経路（既存互換）**
 - stdio: Claude Codeローカル利用として引き続き動作

@@ -583,6 +583,9 @@ def _build_composer_user_msg(
     return f"質問: {question}\n{citation_guard}\n--- 収集した条文素材 ---\n{chunks_text}"
 
 
+_COMPOSER_FALLBACK_MSG = "回答の生成に失敗しました。同じ質問をもう一度お試しください。"
+
+
 def _run_composer(
     question: str, all_chunks: list, config: AgentConfig,
     advisor_conclude_reason: str | None = None, scope_text: str = "",
@@ -604,7 +607,6 @@ def _run_composer(
     )
 
     resp = client.chat([{"role": "user", "text": user_msg}], [], system)
-    elapsed = time.perf_counter() - t0
 
     raw = resp.text or ""
     parsed = _parse_composer_output(raw)
@@ -613,12 +615,37 @@ def _run_composer(
     if not isinstance(cited_ids, list):
         cited_ids = []
 
+    # W-1: 空答リトライ（1回）
+    composer_retry = False
+    combined_usage = resp.usage
+    if not answer.strip():
+        logger.warning("composer: empty answer — retrying once (composer_retry=True)")
+        composer_retry = True
+        resp2 = client.chat([{"role": "user", "text": user_msg}], [], system)
+        raw2 = resp2.text or ""
+        parsed2 = _parse_composer_output(raw2)
+        answer = parsed2.get("answer", raw2)
+        cited_ids = parsed2.get("cited_chunk_ids", [])
+        if not isinstance(cited_ids, list):
+            cited_ids = []
+        combined_usage = {
+            "input_tokens": resp.usage.get("input_tokens", 0) + resp2.usage.get("input_tokens", 0),
+            "output_tokens": resp.usage.get("output_tokens", 0) + resp2.usage.get("output_tokens", 0),
+        }
+        if not answer.strip():
+            logger.warning("composer: retry also empty — returning fallback message")
+            answer = _COMPOSER_FALLBACK_MSG
+            cited_ids = []
+
+    elapsed = time.perf_counter() - t0
+
     return answer, cited_ids, raw, {
         "model": config.composer_model,
-        "usage": resp.usage,
+        "usage": combined_usage,
         "time_s": round(elapsed, 2),
         "raw_response": raw,
         "thinking": resp.thinking,
+        "composer_retry": composer_retry,
     }
 
 
@@ -684,18 +711,42 @@ def make_composer_stream(
 
     def get_result():
         raw = full_text_holder[0]
-        elapsed = time.perf_counter() - t0
         parsed = _parse_composer_output(raw)
         answer = parsed.get("answer", raw)
         cited_ids = parsed.get("cited_chunk_ids", [])
         if not isinstance(cited_ids, list):
             cited_ids = []
+
+        # W-1: 空答リトライ（1回）
+        composer_retry = False
+        combined_usage = dict(usage_holder)
+        if not answer.strip():
+            logger.warning("composer(stream): empty answer — retrying once (composer_retry=True)")
+            composer_retry = True
+            resp2 = client.chat([{"role": "user", "text": user_msg}], [], system)
+            raw2 = resp2.text or ""
+            parsed2 = _parse_composer_output(raw2)
+            answer = parsed2.get("answer", raw2)
+            cited_ids = parsed2.get("cited_chunk_ids", [])
+            if not isinstance(cited_ids, list):
+                cited_ids = []
+            combined_usage = {
+                "input_tokens": usage_holder.get("input_tokens", 0) + resp2.usage.get("input_tokens", 0),
+                "output_tokens": usage_holder.get("output_tokens", 0) + resp2.usage.get("output_tokens", 0),
+            }
+            if not answer.strip():
+                logger.warning("composer(stream): retry also empty — returning fallback message")
+                answer = _COMPOSER_FALLBACK_MSG
+                cited_ids = []
+
+        elapsed = time.perf_counter() - t0
         return answer, cited_ids, raw, {
             "model": config.composer_model,
-            "usage": dict(usage_holder),
+            "usage": combined_usage,
             "time_s": round(elapsed, 2),
             "raw_response": raw,
             "thinking": None,
+            "composer_retry": composer_retry,
         }
 
     return gen(), get_result

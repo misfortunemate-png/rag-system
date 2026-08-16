@@ -1,0 +1,319 @@
+{
+  "id": "cd-04",
+  "part": "A",
+  "question": "既存の鉄骨階段の塗膜が劣化し、さびが発生している。塗替えの素地ごしらえと塗装工程について適用される規定を挙げよ。",
+  "expected_docs": [
+    "kaishu-kenchiku-r7",
+    "nipponpaint-kaishu"
+  ],
+  "retrieval_doc_recall": 1.0,
+  "doc_recall": 0.5,
+  "retrieval_hit": [
+    "kaishu-kenchiku-r7",
+    "nipponpaint-kaishu"
+  ],
+  "retrieval_miss": [],
+  "citation_hit": [
+    "kaishu-kenchiku-r7"
+  ],
+  "citation_miss": [
+    "nipponpaint-kaishu"
+  ],
+  "retrieved_chunk_ids": [
+    "suuryou-sekisan-kijun-0079",
+    "suuryou-sekisan-kijun-0076",
+    "nipponpaint-kaishu-0288",
+    "mokuzou-shiyousho-r7-0327",
+    "kaishu-kenchiku-r7-0341",
+    "nipponpaint-kaishu-0216",
+    "kaishu-kenchiku-r7-0323",
+    "kaishu-kenchiku-r7-0322",
+    "kaishu-kenchiku-r7-0324-1",
+    "nipponpaint-kaishu-0087",
+    "nipponpaint-kaishu-0224",
+    "nipponpaint-kaishu-0225",
+    "kaishu-kenchiku-r7-0332-1",
+    "nipponpaint-kaishu-0222",
+    "nipponpaint-kaishu-0258",
+    "nipponpaint-kaishu-0297",
+    "nipponpaint-kaishu-0220",
+    "kaishu-kenchiku-r7-0342",
+    "kenchiku-shiyousho-r7-0649",
+    "kaishu-kenchiku-r7-0318",
+    "nipponpaint-kaishu-0223",
+    "nipponpaint-kaishu-0298",
+    "nipponpaint-kaishu-0291",
+    "kaishu-kenchiku-r7-0335",
+    "kaishu-kenchiku-r7-0333",
+    "nipponpaint-kaishu-0281",
+    "kaishu-kenchiku-r7-0349",
+    "kenchiku-shiyousho-r7-0642",
+    "nipponpaint-kaishu-0290",
+    "nipponpaint-kaishu-0289",
+    "nipponpaint-kaishu-0292",
+    "kaishu-kenchiku-r7-0330",
+    "kaishu-kenchiku-r7-0463",
+    "kaishu-kenchiku-r7-0308",
+    "kaishu-kenchiku-r7-0537",
+    "kaishu-kikai-r4-0228"
+  ],
+  "cited_chunk_ids": [
+    "kaishu-kenchiku-r7-0308",
+    "kaishu-kenchiku-r7-0323",
+    "kaishu-kenchiku-r7-0318",
+    "kaishu-kenchiku-r7-0330",
+    "kaishu-kenchiku-r7-0332-1",
+    "kaishu-kenchiku-r7-0342",
+    "kaishu-kenchiku-r7-0335",
+    "suuryou-sekisan-kijun-0079",
+    "mokuzou-shiyousho-r7-0327",
+    "kaishu-kikai-r4-0228"
+  ],
+  "answer": "## 既存鉄骨階段の塗替えに関する規定\n\n### 1. 所蔵から言えること\n\n既存の鉄骨階段（鉄鋼面）の塗替えについては、**公共建築改修工事標準仕様書（建築工事編）令和7年版**（以下「改修仕様書」）の第7章「塗装改修工事」が適用されます。\n\n#### (1) 適用範囲と一般事項\n- 第7章は「建築物の内外部の…金属…等の素地の塗装の塗替え及び新規の塗装を施す工事に適用」されます（kaishu-kenchiku-r7-0308）。\n- 「この章は、１章[各章共通事項]と併せて適用する」とされています（同）。\n\n#### (2) 素地ごしらえ（下地処理）\n鉄骨階段は「鉄鋼面」に該当し、**第3節「素地ごしらえ」**（7.3節）が適用されます。ただし、改修仕様書7.3.1は「新規に塗装を行う場合」の素地ごしらえを規定しており（kaishu-kenchiku-r7-0323）、**塗替えの場合は下地調整（7.2節）が優先**されます。\n\n鉄鋼面の**下地調整**は、**7.2.3「鉄鋼面の下地調整」**（kaishu-kenchiku-r7-0318）により、表7.2.2に従います。種別は特記がなければ**RB種**とされ、既存塗膜が劣化し錆が発生している場合は以下の処置が必要です：\n\n| 工程 | RB種の処理 |\n|------|------------|\n| 1.既存塗膜の除去 | ディスクサンダー、スクレーパー等により、劣化しぜい弱な部分、錆等を除去し、活膜は残す |\n| 2.汚れ、付着物除去 | 素地を傷つけないようにワイヤブラシ等により除去 |\n| 3.油類除去 | 既存塗膜を除去した範囲を溶剤ぶき |\n| 4.研磨紙ずり | 研磨紙P120～220で全面を平らに研磨し、研磨かす等を除去 |\n\n#### (3) 錆止め塗料塗り（下塗り）\n下地調整後、**第4節「錆止め塗料塗り」**（7.4節）が適用されます。7.4.1では「鉄鋼面及び亜鉛めっき鋼面の塗替え並びに新規の錆止め塗料塗りに適用する」とされています（kaishu-kenchiku-r7-0330）。\n\n**7.4.3「錆止め塗料塗り」**（kaishu-kenchiku-r7-0332-1）によると、塗替えの場合の種別は特記がなければ**C種**とされ：\n- 下地調整：表7.2.2によるRB種\n- 錆止め塗料塗り（下塗り1回目）：素地露出部分のみ塗り付ける\n- 研磨紙ずり：研磨紙P120～180にて全面を平らに研磨\n- 錆止め塗料塗り（下塗り2回目）：全面に塗り付ける\n\n#### (4) 上塗り工程\n上塗りは、使用する塗料の種類に応じて該当する節が適用されます。一般的な鉄鋼面の塗替えでは：\n\n**合成樹脂調合ペイントの場合**（7.5節）：\n- 7.5.3「鉄鋼面の合成樹脂調合ペイント塗り」（kaishu-kenchiku-r7-0335）により、C種の場合：\n  - 下地調整：表7.2.2によるRC種\n  - 錆止め塗料塗り：7.4.3(1)による\n  - 穴埋め、パテかい、研磨紙ずり、中塗り1回目・2回目、上塗り\n\n**耐候性塗料の場合**（7.8節）：\n- 7.8.2「鉄鋼面の耐候性塗料塗り」（kaishu-kenchiku-r7-0342）により、表7.8.1に従い：\n  - 錆止め塗料塗り：7.4.3(1)による\n  - 研磨紙ずり：研磨紙P120～220\n  - 中塗り：JIS K 5659 A種中塗り塗料 0.14kg/㎡\n  - 上塗り：JIS K 5659 A種上塗り塗料 0.10kg/㎡\n\n#### (5) 鉄骨階段の区分\n数量積算基準では、鉄骨階段は「付帯鉄骨」に区分され、「段板、ささら桁及びこれに付随する部分をいい、踊場等を含む」とされています（suuryou-sekisan-kijun-0079）。\n\n### 2. 所蔵にないこと\n\n**所蔵文書に特段の規定がない事項：**\n\n1. **新設鉄骨階段の塗装工程**：公共建築工事標準仕様書（建築工事編）令和7年版（新設工事用）には、鉄骨階段の塗装に関する個別規定は確認できません。ただし、新設工事の場合は同書の第18章「塗装工事」が参考になります。\n\n2. **木造階段の塗装**：公共建築木造工事標準仕様書 令和7年版には階段の取付け方法（8.9.7）は規定されていますが（mokuzou-shiyousho-r7-0327）、塗装工程の詳細は記載されていません。\n\n3. **消防設備の塗装**：消火設備や避難設備に近接する階段の塗装については、消防法令上の制限（薬剤による影響等）の観点から、消防法関係規定の確認が必要です。\n   - **検索キーワード**：「消防法」「防火対象物」「塗装規制」\n\n4. **機械設備工事の塗装**：機械設備工事編（kaishu-kikai-r4-0228）ではガス設備の塗装に関する規定がありますが、階段自体の塗装に関する規定はありません。\n\n5. **具体的な塗料商品の選定**：日本ペイントの塗装仕様書（nipponpaint-kaishu-シリーズ）は参考情報ですが、公共工事の仕様書として正式に引用されるものではありません。実際の工事では改修仕様書の規定に従い、特記により指定された塗料を使用します。\n\n### 3. 推論で補えること\n\n**推論1：さびの程度による下地処理の種別選択**\n- 改修仕様書7.2.3の表7.2.2では、RA種（全面除去）、RB種（劣化部分除去＋活膜残存）、RC種（軽微な研磨）の3区分があります。質問のように「さびが発生している」場合、さびの範囲と深度によりRB種又はRA種が適切と考えられます。RB種では「劣化しぜい弱な部分、錆等を除去」するため、活膜が残っていればRB種で対応可能ですが、さびが全面に及ぶ場合はRA種（全面除去）が適切です。\n\n**推論2：塗装系の選択肢**\n- 階段の使用環境（屋内か屋外か）により適切な塗装系が異なります。屋内階段であれば合成樹脂調合ペイント又はフタル酸樹脂エナメル、屋外であれば耐候性塗料が一般的です。改修仕様書では複数の塗装系が規定されており、特記による指定が優先されます。\n\n**推論3：二段階塗装の必要性**\n- 錆止め塗料塗り（下塗り）は、C種（塗替え）の場合、1回目は「素地露出部分のみ」、2回目は「全面」に行うとされています（kaishu-kenchiku-r7-0332-1）。これは、既存の活膜部分と素地露出部分で防食性能が異なるため、露出部分を優先的に処理する実務上の配慮と考えられます。",
+  "planner_output": "質問タイプ: 手順確認\nターゲット: 日本ペイント 公共建築改修工事標準仕様書対応 塗装仕様書 (nipponpaint-kaishu) 内の「鉄骨部」または「鉄骨階段」に関する素地調整及び塗装工程の節\nクエリ1: 鉄骨 階段 塗替え\nクエリ2: 素地ごしらえ 塗装工程 改修\nクエリ3: さび 処理 塗替え",
+  "loops": 10,
+  "trace": [
+    {
+      "loop": 1,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "鉄骨 階段 塗替え",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "素地ごしらえ 塗装工程 改修",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "さび 処理 塗替え",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 2,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "鉄鋼面 素地ごしらえ 塗替え 表7.2.2",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "kaishu-kenchiku-r7",
+            "hierarchy": "7.3.3"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 3,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "kaishu-kenchiku-r7",
+            "hierarchy": "7.2.2"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "nipponpaint-kaishu",
+            "hierarchy": "chunk-220"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 4,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "7.2.2 鉄鋼面 下地調整 表7.2.2",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "nipponpaint-kaishu",
+            "hierarchy": "chunk-220"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 5,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "nipponpaint-kaishu",
+            "hierarchy": "chunk-224"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "nipponpaint-kaishu",
+            "hierarchy": "chunk-225"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "kaishu-kenchiku-r7",
+            "hierarchy": "7.5"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 6,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "合成樹脂調合ペイント塗り 鉄鋼面 改修 表7.5",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "kaishu-kenchiku-r7",
+            "hierarchy": "7.5.1"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "kaishu-kenchiku-r7",
+            "hierarchy": "7.6.1"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 7,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "nipponpaint-kaishu",
+            "hierarchy": "chunk-222"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "nipponpaint-kaishu",
+            "hierarchy": "chunk-288"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "kaishu-kenchiku-r7",
+            "hierarchy": "7.5.2"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 8,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "フタル酸樹脂エナメル 鉄鋼面 塗替え",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "7.7 鉄鋼面 フタル酸 改修 標準仕様書",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 9,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "第7章 塗装 改修 標準仕様書 節 構成",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "kaishu-kenchiku-r7",
+            "hierarchy": "7.7.1"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "kaishu-kenchiku-r7",
+            "hierarchy": "7.9.1"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 9,
+      "budget_stop": true,
+      "tool_calls": []
+    }
+  ],
+  "elapsed_s": 394.3,
+  "total_input_tokens": 177038,
+  "total_output_tokens": 5734,
+  "cost_usd": 0.013998,
+  "boundary_keywords_detected": [
+    "確認が必要",
+    "規定がない"
+  ]
+}

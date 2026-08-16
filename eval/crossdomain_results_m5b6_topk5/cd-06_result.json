@@ -1,0 +1,183 @@
+{
+  "id": "cd-06",
+  "part": "A",
+  "question": "誘導灯の設置基準と、非常電源として用いる蓄電池設備の点検基準を挙げよ。",
+  "expected_docs": [
+    "law-90c",
+    "bepyo-16-yuudoutou",
+    "bepyo-25-1-hijouden-chikudenchi"
+  ],
+  "retrieval_doc_recall": 1.0,
+  "doc_recall": 1.0,
+  "retrieval_hit": [
+    "law-90c",
+    "bepyo-16-yuudoutou",
+    "bepyo-25-1-hijouden-chikudenchi"
+  ],
+  "retrieval_miss": [],
+  "citation_hit": [
+    "law-90c",
+    "bepyo-16-yuudoutou",
+    "bepyo-25-1-hijouden-chikudenchi"
+  ],
+  "citation_miss": [],
+  "retrieved_chunk_ids": [
+    "bepyo-16-yuudoutou-0005",
+    "law-90b-49",
+    "law-90c-77",
+    "bepyo-16-yuudoutou-0001",
+    "law-90c-75",
+    "bepyo-25-1-hijouden-chikudenchi-0002",
+    "bepyo-25-1-hijouden-chikudenchi-0001",
+    "bepyo-25-1-hijouden-chikudenchi-0013",
+    "bepyo-24-hijouden-jikahatsu-0004",
+    "bepyo-25-1-hijouden-chikudenchi-0009",
+    "bepyo-16-yuudoutou-0002",
+    "law-90c-76",
+    "dengi-kaishaku-0229",
+    "dengi-kaishaku-kaisetsu-0267",
+    "setsubi-sekkei-kijun-r6-0019",
+    "bepyo-27-sougou-sousa-0001",
+    "bepyo-25-1-hijouden-chikudenchi-0012",
+    "bepyo-23-hijouden-juden-0001",
+    "bepyo-14-hijou-keihou-0001",
+    "bepyo-35-fukugou-jikahou-0001",
+    "bepyo-24-hijouden-jikahatsu-0001",
+    "bepyo-25-2-hijouden-nenryou-0001"
+  ],
+  "cited_chunk_ids": [
+    "law-90b-49",
+    "law-90c-76",
+    "law-90c-77",
+    "bepyo-25-1-hijouden-chikudenchi-0001",
+    "bepyo-25-1-hijouden-chikudenchi-0002",
+    "bepyo-25-1-hijouden-chikudenchi-0009",
+    "bepyo-25-1-hijouden-chikudenchi-0012",
+    "bepyo-25-1-hijouden-chikudenchi-0013",
+    "bepyo-16-yuudoutou-0002",
+    "bepyo-16-yuudoutou-0005",
+    "setsubi-sekkei-kijun-r6-0019",
+    "dengi-kaishaku-0229",
+    "dengi-kaishaku-kaisetsu-0267"
+  ],
+  "answer": "## 誘導灯の設置基準及び非常電源（蓄電池設備）の点検基準\n\n### 1. 誘導灯の設置基準\n\n所蔵文書に基づき、誘導灯の設置基準は「消防法施行令」（以下「令」）及び「消防法施行規則」（以下「規則」）に定められています。\n\n**（1）設置が義務付けられる防火対象物（令第26条第1項）**\n\n誘導灯は、防火対象物の用途及び階数等に応じて、以下の区分で設置が義務付けられます。\n\n- **避難口誘導灯**: 別表第一（一）項から（四）項まで、（五）項イ、（六）項、（九）項、（十六）項イ、（十六の二）項及び（十六の三）項に掲げる防火対象物、並びに同表（五）項ロ、（七）項、（八）項、（十）項から（十五）項まで及び（十六）項ロに掲げる防火対象物の地階、無窓階及び十一階以上の部分に設置するものとされています（[law-90b-49]）。\n- **通路誘導灯**: 上記と同一の対象物及び部分に設置します（[law-90b-49]）。\n- **客席誘導灯**: 別表第一（一）項に掲げる防火対象物等に設置します（[law-90b-49]）。\n- **誘導標識**: 別表第一（一）項から（十六）項までに掲げる防火対象物に設置します（[law-90b-49]）。\n\nなお、規則第28条の2において、避難が容易であると認められる場合の設置免除基準が詳細に定められています（[law-90c-76]）。\n\n**（2）設置及び維持に関する技術上の基準（令第26条第2項、規則第28条の3）**\n\n主な技術基準は以下のとおりです。\n\n- **表示・輝度**: 避難口誘導灯は緑色の灯火とし、通路誘導灯は避難の方向を明示した緑色の灯火とすること。客席誘導灯は客席の照度が0.2ルクス以上となるように設けること（令第26条第2項）。\n- **有効範囲**: 避難口誘導灯及び通路誘導灯の有効範囲は、当該誘導灯までの歩行距離が規定の距離以下となる範囲とすること（規則第28条の3第2項）。\n- **設置位置**: 避難口誘導灯は避難口の上部又はその直近に、通路誘導灯は曲り角等に設置する（規則第28条の3第3項）。\n- **非常電源**: 誘導灯には非常電源を附置すること（令第26条第2項第四号、規則第28条の3第4項第十号）。非常電源は、直交変換装置を有しない蓄電池設備によるものとし、その容量は原則として20分間（特定の避難口等に設けるものは60分間）作動できる容量以上とすること（規則第28条の3第4項第十号）。\n- **点滅・音声誘導機能**: 特定の避難口に設置する避難口誘導灯に限り、自動火災報知設備と連動する点滅機能又は音声誘導機能を設けることができる（規則第28条の3第4項第六号）。\n\n### 2. 非常電源（蓄電池設備）の点検基準\n\n非常電源として用いる蓄電池設備の点検基準は、消防法に基づく点検基準（別表第25-1）に定められています。\n\n**（1）機器点検（定期に行う点検）**\n\n以下の事項について確認することとされています（[bepyo-25-1-hijouden-chikudenchi-0001]等）。\n\n- **設置状況**: 周囲に使用上・点検上の障害となるものがないこと。不燃専用室の区画、防火戸等に変形・損傷がないこと。水の浸透がないこと。換気が適正に行えること。照明が点検上支障がないこと。標識が適正に設けられていること。\n- **蓄電池本体**: 外形の変形・損傷・著しい腐食等がないこと。表示が適正であること。開閉器・遮断器が正常であること。交流入力電圧及び充電電圧が適正であること（[bepyo-25-1-hijouden-chikudenchi-0009]）。\n- **耐震措置**: アンカーボルト等に変形・損傷・著しい腐食等がなく、耐震措置が適正に行われていること（[bepyo-25-1-hijouden-chikudenchi-0012]）。\n- **予備品等**: 予備品及び回路図等が備えてあること（[bepyo-25-1-hijouden-chikudenchi-0012]）。\n\n**（2）総合点検（年1回程度実施する機能確認）**\n\n以下の事項について確認することとされています（[bepyo-25-1-hijouden-chikudenchi-0012][bepyo-25-1-hijouden-chikudenchi-0013]）。\n\n- **接地抵抗**: 接地抵抗値が適正であること。\n- **絶縁抵抗**: 絶縁抵抗値が適正であること。\n- **容量**: 蓄電池の容量が適正であること。\n- **切替装置**: 常用電源を停電状態にしたときに自動的に非常電源に切り替わること。直交変換装置を有しない蓄電池設備にあっては、常用電源を復旧したときに自動的に常用電源に切り替わること。\n- **電圧計・周波数計**: 指示値が適正であること。\n- **警報動作**: 警報動作が正常であること。\n\n### 3. 所蔵文書に特段の規定がない事項\n\n- **建築設備設計基準における蓄電池設備の仕様**: 所蔵文書中に建築設備設計基準（令和6年版）は存在しますが、直流電源装置や交流無停電電源装置（UPS）に関する設計上の仕様については、当該基準の第2節及び第3節に記載があります（[setsubi-sekkei-kijun-r6-0019]）。非常電源として用いる蓄電池設備の具体的な設計仕様（容量算定方法、設置場所の要件等）については、同基準を別途参照する必要があります。\n- **電気設備の技術基準における蓄電池の保護装置**: 非常用予備電源として用いられる蓄電池については、電気設備の技術基準の解釈第44条の保護装置に関する規定の適用除外となります（[dengi-kaishaku-0229][dengi-kaishaku-kaisetsu-0267]）。ただし、常用電源の停電時等に用いる非常用蓄電池以外の蓄電池（負荷平準化用等）については、別途保護装置の設置が必要となります。この点について、所蔵文書では非常用蓄電池の保護装置に関する具体的な基準は明記されておらず、電気設備の技術基準を直接参照する必要があります。\n- **誘導灯内蔵の非常電源の点検**: 誘導灯本体に内蔵されている蓄電池については、別表第16の点検基準において、「外形」「表示」「機能」の確認が定められています（[bepyo-16-yuudoutou-0002]）。独立した蓄電池設備とは点検項目が異なるため、注意が必要です。\n\n### 推論で補えること\n\n非常電源として用いる蓄電池設備の点検は、消防法に基づく点検（消防設備士等による法定点検）と、電気事業法に基づく保安規定に基づく点検（自家用電気工作物としての定期点検）の両方が求められる可能性があります。所蔵文書には電気事業法の施行規則（[law-89b]）が含まれていますが、蓄電池設備に特化した点検基準は明記されていません。両法令の目的（消防法は火災時の避難・消火の確保、電気事業法は電気保安の確保）を考慮すると、消防法に基づく点検に加え、電気工作物としての絶縁抵抗測定や保護装置の動作確認等を併せて行うことが実務上適切と考えられます。",
+  "planner_output": "質問タイプ: その他（複数項目の情報要求）\nターゲット: 誘導灯の設置基準：別表第16 誘導灯、消防法施行令／建築基準法関連条項。／ 非常電源（蓄電池）の点検基準：別表第25-1 非常電源（蓄電池）、消防法施行規則関連条項。\nクエリ1: 誘導灯 設置基準\nクエリ2: 非常電源 蓄電池 点検基準\nクエリ3: 別表第16 誘導灯&別表第25-1 非常電源",
+  "loops": 4,
+  "trace": [
+    {
+      "loop": 1,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "誘導灯 設置基準",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "非常電源 蓄電池 点検基準",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "別表第16 誘導灯",
+            "top_k": 5
+          },
+          "hits": 5
+        },
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "別表第25-1 非常電源 蓄電池",
+            "top_k": 5
+          },
+          "hits": 5
+        }
+      ]
+    },
+    {
+      "loop": 2,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-16-yuudoutou",
+            "hierarchy": "chunk-1"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "chunk-1"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "law-90b",
+            "hierarchy": "第二十六条"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "law-90c",
+            "hierarchy": "第二十八条の三"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 3,
+      "tool_calls": [
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-16-yuudoutou",
+            "hierarchy": "bepyo-16-yuudoutou"
+          },
+          "hits": null
+        },
+        {
+          "name": "read_section",
+          "input": {
+            "doc_slug": "bepyo-25-1-hijouden-chikudenchi",
+            "hierarchy": "bepyo-25-1-hijouden-chikudenchi"
+          },
+          "hits": null
+        }
+      ]
+    },
+    {
+      "loop": 4,
+      "tool_calls": [
+        {
+          "name": "search_chunks",
+          "input": {
+            "query": "別表第25 非常電源 蓄電池設備 点検 総合点検 機器点検",
+            "top_k": 10
+          },
+          "hits": 10
+        }
+      ]
+    }
+  ],
+  "elapsed_s": 231.0,
+  "total_input_tokens": 106249,
+  "total_output_tokens": 7180,
+  "cost_usd": 0.009448,
+  "boundary_keywords_detected": [
+    "規定がない"
+  ]
+}

@@ -8,9 +8,10 @@ M5b: 72文書13,714チャンクに対してハイブリッド検索＋リラン�
 ## 作業指示
 
 マイルストーンごとに docs/instructions/ に指示書が発行される。
-**現行の指示書（並行2本）:**
-- **docs/instructions/m5b-1-instructions.md** — ingest品質改善（先に着工・GPU処理あり）
-- **docs/instructions/m5b-2-instructions.md** — 検索層改修（並行着工可・テストはM5b-1完了後）
+
+**M5b（完了・クローズ）:**  docs/instructions/m5b-*-instructions.md 全6本 — 検収済み
+
+**次マイルストーン:** M5c（ローカルMCPサーバー化）— 指示書発行待ち
 
 現行の指示書を読んでから着工すること。指示書がない場合は着工せず待機。
 

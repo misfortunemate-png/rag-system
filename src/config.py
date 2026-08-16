@@ -69,7 +69,7 @@ class AgentConfig:
     loop_model: str = DEFAULT_MODEL
     composer_model: str = DEFAULT_MODEL
     max_loops: int = 15
-    top_k: int = 3
+    top_k: int = 5
     answer_style: str = "standard"
     # M4: アドバイザー
     advisor_model: str = DEFAULT_MODEL

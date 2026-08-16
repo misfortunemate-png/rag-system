@@ -15,7 +15,7 @@
 ターミナルで以下を実行し、各IDに1つずつトークンを生成する:
 
 ```
-.venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(32))"
+.\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
 3回実行して3つのトークン文字列を控えておく。
@@ -47,7 +47,7 @@ tokens:
 プロジェクトルートで:
 
 ```
-start-mcp-remote.bat
+.\start-mcp-remote.bat
 ```
 
 成功すると以下のような出力が表示される:
@@ -107,7 +107,7 @@ claude.aiで設定したコネクタは、**同じアカウントでログイン
      token: "（新しく生成したトークン）"
      expires: "2026-10-01"    # 期限を明示的に設定する
    ```
-2. `start-mcp-remote.bat` を再起動する（設定は起動時に読み込む）
+2. `.\start-mcp-remote.bat` を再起動する（設定は起動時に読み込む）
 3. ゲストにトークン文字列を安全な方法で共有する（Slackのダイレクトメッセージ等）
 
 期限切れのトークンはサーバー起動時に自動的に無効化される（yaml から削除する必要はない）。
@@ -118,7 +118,7 @@ claude.aiで設定したコネクタは、**同じアカウントでログイン
 
 1. 新しいトークンを生成する（`secrets.token_urlsafe(32)`）
 2. `data/auth_tokens.yaml` の該当エントリの `token` 値を新しいものに更新する
-3. サーバーを再起動する（`start-mcp-remote.bat`）
+3. サーバーを再起動する（`.\start-mcp-remote.bat`）
 4. **claude.ai のコネクタ設定** → Request Headers の `Authorization` 値を新しいトークンに更新する
 
 ---

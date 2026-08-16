@@ -1,110 +1,63 @@
-# 規程エージェント M5c 作業指示書 — MCPサーバー化（stdio型・ローカル完結）
+# 規程エージェント M5c作業指示書（ローカルMCPサーバー環境整備・疎通確認）
 
-作成日: 2026-08-08 ／ PM: クリーデ
-前提: M4.5完了（文書投入基盤・文書スコープ選択）。ロードマップv1のM7a設計をM5cに前倒し
-対応ロードマップ: docs/roadmap-v1.md M7a（v1.1でM5cに再配置）
+作成日: 2026-08-16 ／ PM: クリーデ ／ 根拠: ロードマップv1 M5c/M7a節
+位置づけ: src/mcp_server.pyは三層フル実装済み。本フェーズは環境整備・納品物作成・疎通確認のみ。
 
-## 目的
+## 背景
 
-規程エージェントを外部LLMクライアント（Claude Code / Claude Desktop / Gemini CLI等の
-MCP対応クライアント）から利用可能にする。業務用途の必要条件である「他ツールからの
-呼び出し」の可否を最短で実証する。リモート公開はしない（M7b・発注者裁定待ち）。
+mcp_server.pyは素材層（list_documents・search_chunks・read_section）、エージェント層（submit_question・get_answer）、フィードバック層（report_feedback）の三層ツールとP-9ガード（同時1・待機2・ジョブ$0.10・日次$1.00）を既に実装している。未着手なのはフラン上での実際の起動・接続・疎通確認と、発注者が手を動かさずに使える納品物一式。
 
-## スコープ概要
+## 作業項目
 
-1. stdio型MCPサーバー（公式Python SDK使用）
-2. 三層ツール（素材層・エージェント層・フィードバック層）
-3. 非同期ジョブ方式（submit→ポーリング）＋実行ガード（P-9）
-4. コスト記帳（chat-pwa互換JSONL）
-5. Claude Codeへの登録と動作確認（登録作業はPGが実施・R-015）
+### W-1: 依存関係の確認と整備
 
-## 1. サーバー本体
+- mcp_server.pyが `from mcp.server.mcpserver import MCPServer` を使用している。フラン上にこのパッケージがインストール済みか確認する
+- 未インストールの場合はインストールし、requirements.txt（または pyproject.toml）に追加する
+- 既存の依存関係（ruri-v3、chromadb、fugashi等）と競合しないことを確認する
 
-- `src/mcp_server.py` を新設。公式MCP Python SDK（`mcp` パッケージ・FastMCP）で
-  stdioサーバーを実装
-- 既存パイプライン（src/agent.py・src/tools.py・src/config.py）を呼び出すラッパーに
-  徹する。**パイプライン本体のロジック変更は禁止**
-- settings.json（selected_doc_ids・モデル構成等）を尊重する。Streamlit UIと同じ
-  設定を読む（設定の二重管理をしない）
-- 起動用 `mcp-server.bat`（ASCII・CRLF）を同梱。ただし通常はクライアントが
-  spawnするため、batは疎通確認用
+### W-2: 起動スクリプトの作成
 
-## 2. ツール定義（三層）
+以下の納品物を作成する（R-015: 発注者にコンソール操作をさせない）:
 
-| 層 | ツール | 引数 | 応答 |
-|---|---|---|---|
-| 素材層 | list_documents() | なし | documents.yamlのactive文書一覧（id・title・domain・tags・profile） |
-| 素材層 | search_chunks(query, top_k=3) | 検索語・件数 | 同期・チャンクリスト（chunk_id・hierarchy・heading・body・pages） |
-| 素材層 | read_section(doc_slug, hierarchy) | スラッグ・条番号 | 同期・条文全文 |
-| エージェント層 | submit_question(question, style="standard") | 質問・回答スタイル | job_id（即時返却） |
-| エージェント層 | get_answer(job_id) | ジョブID | running{loop数・経過秒} / done{回答＋引用＋メタフッター相当} / error{理由} |
-| フィードバック層 | report_feedback(job_id, verdict, correction="", evidence="") | 裁定・訂正・根拠 | 受理確認 |
+1. **start-mcp.bat**（Windows・ASCII・CRLF）: mcp_server.pyをstdioモードで起動するバッチファイル。.envの存在確認、Python仮想環境の有効化（あれば）、`python src/mcp_server.py` の実行。エラー時はpauseで停止
+2. **.env.example**: MCP固有の環境変数（MCP_JOB_COST_CAP、MCP_DAILY_COST_CAP）を既定値付きで記載。既存の.env.example（あれば）にマージ
 
-- 素材層は既存 search_chunks / read_section を直接呼ぶ（selected_doc_idsスコープ適用）
-- ツールのdescriptionは事実の記述に留める（文書ごとの解釈指示を書かない。
-  roadmap「プロンプトは彫り込まない」に従う）
+### W-3: Claude Desktop / Claude Code用MCP設定例
 
-## 3. ジョブ方式とガード（P-9）
+docs/mcp-setup.md に以下を記載する:
 
-- submit_question はバックグラウンドスレッドで実行。**同時実行1・待機キュー2**。
-  超過時はエラー応答（受け付けない理由を明記して返す）
-- ジョブ状態はプロセス内メモリ管理で可（stdioサーバーの寿命＝クライアント
-  セッション）。完了ジョブは最新20件保持
-- **ジョブ単価上限**: 既定 $0.10。実行中に累計推定コスト（既存estimate_cost利用）が
-  超過したら中断し、error{cost_cap_exceeded}を返す
-- **日次上限**: 既定 $1.00。当日ログの合計が超過していたら新規submitを拒否
-- 上限値は環境変数（MCP_JOB_COST_CAP / MCP_DAILY_COST_CAP）で変更可
+1. Claude Desktop用の claude_desktop_config.json のスニペット例（command・args・cwd）
+2. Claude Code用の .mcp.json のスニペット例
+3. 接続確認の手順（list_documentsを呼んで文書一覧が返ることを確認）
 
-## 4. コスト記帳（chat-pwa互換JSONL）
+パスはフランの作業ディレクトリ（D:\AI\github\rag-system）を前提とする。
 
-- `logs/YYYY-MM-DD.log` にJSONL追記。chat-pwaと同形式:
-  `{"ts": ISO8601, "event": ..., "model": ..., "usage": {"input_tokens": N, "output_tokens": N}, ...}`
-- 記録イベント: job_submitted / job_done（ステージ別usage・推定コスト・所要秒）/
-  job_error / feedback_received
-- Streamlit側（app.py経由の実行）への記帳追加は**本指示のスコープ外**（別途M5bで検討）
+### W-4: 疎通確認
 
-## 5. フィードバック受信箱
+フラン上で以下の疎通確認を実施する:
 
-- `data/feedback/inbox.jsonl`（追記専用）: ts / source_client / job_id / question /
-  verdict(correct|incorrect|incomplete) / correction / evidence
-- **自動反映禁止**: 受信箱への追記のみ。eval追加・正誤表ingestへの昇格は
-  発注者とPMの検分を経る（実装しない）
+1. **素材層**: search_chunks(query="メタルモール 配線") を呼び、チャンクが返ることを確認
+2. **素材層**: read_section(doc_slug="denki-shiyousho-r7", hierarchy="1.7.3") を呼び、条文が返ることを確認
+3. **エージェント層**: submit_question(question="メタルモールで配線してよい場所は？") → job_id取得 → get_answer(job_id) のポーリングで回答が返ることを確認
+4. **フィードバック層**: report_feedback(job_id=上記, verdict="correct") を呼び、data/feedback/inbox.jsonl にエントリが追記されることを確認
+5. **ガード確認**: 日次コスト集計（logs/YYYY-MM-DD.log）にjob_doneエントリが記録されることを確認
 
-## 6. 登録と動作確認
+疎通の実施方法は任意（Claude Code MCPクライアント、Python直接呼び出し、mcp inspectorのいずれでも可）。
 
-- フラン上のClaude Codeに登録（プロジェクトスコープ `.mcp.json` をリポジトリ直下に
-  同梱し、これが正）。登録・疎通確認はPGが実施（R-015）
-- Claude Desktopへの登録手順は docs/ にMarkdownで納品（発注者が試す場合の参照用。
-  設定ファイルの場所とJSON片を記載）
+### W-5: _STATUS.md・CLAUDE.md更新
 
-## 依存
-
-- 新規pip依存は `mcp`（公式SDK）のみ許可。requirements.txtに追記。
-  それ以外が必要なら着工前にdocs/reports/で相談
-
-## テスト
-
-| テスト | 方法 | 合格条件 |
-|---|---|---|
-| 疎通 | Claude Codeからlist_documents呼び出し | active文書一覧が返る |
-| 素材層 | search_chunks("ケーブル") / read_section既知条番号 | 既存Streamlit経由と同一内容 |
-| スコープ | settings.jsonでselected_doc_ids=[]にして検索 | 0件応答（エラーで落ちない） |
-| ジョブ正常系 | submit_question(R2相当問)→ポーリング→done | 回答・引用・メタ情報が返る |
-| ジョブ多重 | 実行中に4件目submit | キュー超過エラーが返る（クラッシュしない） |
-| コスト記帳 | job_done後にlogs/当日ファイル確認 | JSONL形式・usage/コストが記録されている |
-| 日次上限 | MCP_DAILY_COST_CAP=0.0001で新規submit | 拒否応答が返る |
-| フィードバック | report_feedback呼び出し | inbox.jsonlに1行追記される |
+- _STATUS.mdをM5c完了に更新
+- CLAUDE.mdにMCPサーバーの起動方法と利用可能ツール一覧を追記
 
 ## 禁止事項
 
-- ショウゴさんにコンソール操作をさせること（R-015。MCP登録作業もPGが実施）
-- リモート公開・ポート開放・トンネル設定（M7b・発注者裁定待ち）
-- 既存パイプライン（agent.py三役ロジック）の変更
-- 既存チャンクデータの再生成
-- eval支給物の改変
+- mcp_server.pyの機能（ツール定義・ガード・ジョブ管理）を変更しない（バグ修正は例外）
+- agent.py・tools.py・config.pyを変更しない
 
 ## 完了条件
 
-- テスト表全項目合格
-- .mcp.json／mcp-server.bat／Claude Desktop登録手順書の同梱
-- docs/reports/ に完了報告（実測のジョブ所要秒・コスト実績を含む）・push済み
+- W-1〜W-3の納品物
+- W-4の疎通確認結果（各ツールの入出力サンプルを添付）
+- docs/reports/m5c-completion.md 提出
+- W-5の更新
+- 「確認をお願いします」で完了報告

@@ -57,23 +57,24 @@ tokens:
 [rag-system MCP] ポート         : 8766
 [rag-system MCP] SSEエンドポイント: http://0.0.0.0:8766/sse
 [rag-system MCP] 有効トークンID  : ['shougo', 'claude-ai', 'guest-demo']
-[rag-system MCP] Tailscale Funnel: tailscale funnel 8766
+[rag-system MCP] Tailscale Funnel: tailscale serve --bg --https 8443 http://127.0.0.1:8766 && tailscale funnel --bg 8443
 ```
 
 ---
 
 ## 3. Tailscale Funnel の有効化
 
-別のターミナルで:
+ポート443はchat-pwaが使用中のため、HTTPS 8443で公開する。別のターミナルで:
 
 ```
-tailscale funnel 8766
+tailscale serve --bg --https 8443 http://127.0.0.1:8766
+tailscale funnel --bg 8443
 ```
 
-公開URLが表示される（例）:
+公開URL:
 
 ```
-https://fraine.tail204746.ts.net:8766
+https://fraine.tail204746.ts.net:8443
 ```
 
 ---
@@ -85,7 +86,7 @@ https://fraine.tail204746.ts.net:8766
 3. **コネクタを追加** → **カスタム** → **Web（HTTP SSE）** を選択
 4. **URL** に以下を入力:
    ```
-   https://（tailscaleで表示されたドメイン）:8766/sse
+   https://fraine.tail204746.ts.net:8443/sse
    ```
 5. **Request Headers** に以下を追加:
    ```

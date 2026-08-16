@@ -512,14 +512,20 @@ class _AuthRateLimitMiddleware:
                 return
             q.append(now)
 
-        # 3. Bearer token check
+        # 3. Token check (Bearer header or URL query parameter)
         headers = {k.lower(): v for k, v in scope.get("headers", [])}
         auth_bytes: bytes = headers.get(b"authorization", b"")
         auth_str = auth_bytes.decode("utf-8", errors="replace")
+        token = ""
         if auth_str.startswith("Bearer "):
             token = auth_str[len("Bearer "):].strip()
-        else:
-            token = ""
+        if not token:
+            # Fallback: ?token= query parameter (for claude.ai connector)
+            qs = scope.get("query_string", b"").decode("utf-8", errors="replace")
+            for part in qs.split("&"):
+                if part.startswith("token="):
+                    token = part[len("token="):]
+                    break
 
         auth_id = self.tokens.get(token)
         if not auth_id:

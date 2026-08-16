@@ -88,11 +88,16 @@ https://fraine.tail204746.ts.net:8443
    ```
    https://fraine.tail204746.ts.net:8443/sse
    ```
-5. **Request Headers** に以下を追加:
-   ```
-   Authorization: Bearer （claude-ai用のトークン文字列）
-   ```
-6. **保存** して接続テストを実行する
+5. **保存** して接続テストを実行する
+
+> **注意**: M7a追補以降、claude.aiはOAuth 2.1フローを自動実行する。  
+> Bearer tokenの手動入力は不要。claude.aiが以下のフローを自動処理する:
+>
+> 1. `GET /.well-known/oauth-authorization-server` でメタデータ取得
+> 2. `POST /register` でclient登録（client_secret = claude-ai用トークン）
+> 3. `GET /authorize` で認可コード取得（自動承認・PKCE S256）
+> 4. `POST /token` でアクセストークン取得
+> 5. 以降のSSEリクエストに `Authorization: Bearer {token}` を自動付与
 
 ### モバイルアプリ
 

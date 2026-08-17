@@ -17,6 +17,7 @@ Cost guards: per-job cap (MCP_JOB_COST_CAP, default $0.10),
 from __future__ import annotations
 
 import collections
+import hmac
 import json
 import logging
 import os
@@ -656,7 +657,7 @@ async def _oauth_metadata(request):
         "registration_endpoint": f"{base}/register",
         "response_types_supported": ["code"],
         "grant_types_supported": ["authorization_code"],
-        "token_endpoint_auth_methods_supported": ["none"],
+        "token_endpoint_auth_methods_supported": ["client_secret_post", "none"],
         "code_challenge_methods_supported": ["S256"],
     })
 
@@ -676,15 +677,22 @@ async def _oauth_register(request):
     if isinstance(redirect_uris, str):
         redirect_uris = [redirect_uris]
 
+    import secrets as _secrets
     client_id = "rag-system-client"
+    client_secret = _secrets.token_urlsafe(32)
     with _oauth_lock:
-        _oauth_clients[client_id] = {"redirect_uris": redirect_uris}
+        _oauth_clients[client_id] = {
+            "redirect_uris": redirect_uris,
+            "client_secret": client_secret,
+        }
 
     _log("oauth_register", ip=ip, client_name=client_name)
     return JSONResponse({
         "client_id": client_id,
         "client_name": client_name,
         "redirect_uris": redirect_uris,
+        "client_secret": client_secret,
+        "token_endpoint_auth_method": "client_secret_post",
     }, status_code=201)
 
 
@@ -829,11 +837,19 @@ async def _oauth_token(request):
     if grant_type != "authorization_code":
         return _fail("unsupported_grant_type")
 
-    # Validate client exists (no secret check — token_endpoint_auth_methods = ["none"])
+    # Validate client exists
     with _oauth_lock:
         client_info = _oauth_clients.get(client_id)
     if not client_info:
         return _fail("invalid_client", 401)
+
+    # client_secret validation (if provided)
+    client_secret_provided = body.get("client_secret")
+    if client_secret_provided:
+        with _oauth_lock:
+            stored = _oauth_clients.get(client_id, {}).get("client_secret")
+        if not stored or not hmac.compare_digest(client_secret_provided, stored):
+            return _fail("invalid_client", 401)
 
     # Validate authorization code (single-use, 60s expiry)
     with _oauth_lock:

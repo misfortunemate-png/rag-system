@@ -107,7 +107,7 @@ tailscale serve status
 3. **コネクタを追加** → **カスタム** → URL に以下を入力:
 
    ```
-   https://fraine.tail204746.ts.net:8443/sse
+   https://fraine.tail204746.ts.net:8443/mcp
    ```
 
 4. 保存するとブラウザにアクセストークン入力画面が開く

@@ -1,8 +1,8 @@
 ---
-version: "M7b-2"
-badge: "M7b-2完了・確認待ち"
+version: "M7b-hotfix2"
+badge: "hotfix-2完了・確認待ち"
 next: "—"
-waiting_on: "PM検収（m7b-2-completion.md）／発注者実機試験"
+waiting_on: "発注者実機試験（コネクタ再登録→承認画面確認）"
 ---
 
 # rag-system 現在地

@@ -615,13 +615,19 @@ class _AuthRateLimitMiddleware:
     @staticmethod
     async def _send_error(send, status: int, message: str) -> None:
         body = message.encode()
+        headers = [
+            (b"content-type", b"text/plain; charset=utf-8"),
+            (b"content-length", str(len(body)).encode()),
+        ]
+        if status == 401 and _MCP_PUBLIC_URL:
+            resource_url = f"{_MCP_PUBLIC_URL}/.well-known/oauth-protected-resource"
+            headers.append(
+                (b"www-authenticate", f'Bearer resource_metadata="{resource_url}"'.encode())
+            )
         await send({
             "type": "http.response.start",
             "status": status,
-            "headers": [
-                (b"content-type", b"text/plain; charset=utf-8"),
-                (b"content-length", str(len(body)).encode()),
-            ],
+            "headers": headers,
         })
         await send({"type": "http.response.body", "body": body, "more_body": False})
 
@@ -644,6 +650,17 @@ def _pkce_verify(verifier: str, challenge: str) -> bool:
     digest = hashlib.sha256(verifier.encode()).digest()
     computed = base64.urlsafe_b64encode(digest).rstrip(b"=").decode()
     return computed == challenge
+
+
+async def _oauth_protected_resource(request):
+    """GET /.well-known/oauth-protected-resource (RFC 9728)"""
+    from starlette.responses import JSONResponse
+    base = _MCP_PUBLIC_URL
+    return JSONResponse({
+        "resource": base,
+        "authorization_servers": [base],
+        "bearer_methods_supported": ["header"],
+    })
 
 
 async def _oauth_metadata(request):
@@ -893,6 +910,7 @@ def _build_oauth_starlette(public_url: str):
     _MCP_PUBLIC_URL = public_url.rstrip("/")
 
     return Starlette(routes=[
+        Route("/.well-known/oauth-protected-resource", _oauth_protected_resource, methods=["GET"]),
         Route("/.well-known/oauth-authorization-server", _oauth_metadata, methods=["GET"]),
         Route("/register", _oauth_register, methods=["POST"]),
         Route("/authorize", _oauth_authorize, methods=["GET", "POST"]),
@@ -908,6 +926,7 @@ class _OAuthSSEDispatcher:
     """
 
     _OAUTH_PATHS = frozenset({
+        "/.well-known/oauth-protected-resource",
         "/.well-known/oauth-authorization-server",
         "/register",
         "/authorize",

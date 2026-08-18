@@ -124,10 +124,10 @@ tailscale serve status
 3. URL に以下を入力:
 
    ```
-   https://fraine.tail204746.ts.net:8443/sse
+   https://fraine.tail204746.ts.net:8443/mcp
    ```
 
-   （`/mcp` でも可）
+   （`/sse` でも可）
 4. OAuth承認画面でアクセストークンを入力
 
 ---
@@ -144,7 +144,7 @@ Authorization: Bearer {token}
 
 ```
 curl -H "Authorization: Bearer {token}" \
-  https://fraine.tail204746.ts.net:8443/sse
+  https://fraine.tail204746.ts.net:8443/mcp
 ```
 
 ---

@@ -87,6 +87,17 @@ status が 401 のとき、レスポンスヘッダーに以下を追加する:
 ローカルでは `curl http://localhost:8766/.well-known/oauth-protected-resource` と
 `curl -I http://localhost:8766/mcp` で代替可。
 
+## 台帳との照合（配線指針§5）
+
+本修正でclaude.aiコネクタのURLが `/sse` → `/mcp` に変わる。
+NW台帳（ai-family-memory ops/state/network.yaml）の `url_dependents` は
+PM側で更新済み（2026-08-18）。PGは以下を確認すること:
+
+- 台帳の claude.ai コネクタ行が `https://fraine.tail204746.ts.net:8443/mcp` になっていること
+- 手順書（docs/mcp-remote-setup.md）のコネクタURLと台帳が一致していること
+
+ポート・serve/funnel設定の変更はないため、台帳の配線行の変更は不要。
+
 ## 完了条件
 
 - src/mcp_server.py の W-1〜W-3 修正

@@ -10,8 +10,8 @@ rag-systemには3種類のアクセス経路がある。
 
 | 経路 | プロトコル | ポート | 対象 |
 |---|---|---|---|
-| MCP（SSE / Streamable HTTP） | HTTPS | 8443 | claude.ai・ChatGPT・CLIクライアント |
-| ブラウザUI（Streamlit） | HTTPS | 10000 | ゲスト・ブラウザ利用者 |
+| MCP（SSE / Streamable HTTP） | HTTPS | 443 | claude.ai・ChatGPT・CLIクライアント |
+| ブラウザUI（Streamlit） | HTTPS | 8443 | ゲスト・ブラウザ利用者 |
 | stdioローカル | 標準入出力 | — | Claude Codeローカル利用 |
 
 ---
@@ -52,12 +52,12 @@ tokens:
 
 ## 3. Tailscale Funnel 設定（三ポート構成）
 
-chat-pwaが443を使用中のため、MCP（8443）とゲストUI（10000）を別ポートで公開する。
+Phase 2でMCPを443に移動済み。MCP（443）、ゲストUI（8443）、予備healthz（10000）の構成。
 
 ```
-tailscale funnel --bg --https=443 http://127.0.0.1:8787
-tailscale funnel --bg --https=8443 http://127.0.0.1:8766
-tailscale funnel --bg --https=10000 http://127.0.0.1:8501
+tailscale funnel --bg --https=443 http://127.0.0.1:8766
+tailscale funnel --bg --https=8443 http://127.0.0.1:8501
+tailscale funnel --bg --https=10000 http://127.0.0.1:10000
 ```
 
 設定確認:
@@ -107,7 +107,7 @@ tailscale serve status
 3. **コネクタを追加** → **カスタム** → URL に以下を入力:
 
    ```
-   https://fraine.tail204746.ts.net:8443/mcp
+   https://fraine.tail204746.ts.net/mcp
    ```
 
 4. 保存するとブラウザにアクセストークン入力画面が開く
@@ -124,7 +124,7 @@ tailscale serve status
 3. URL に以下を入力:
 
    ```
-   https://fraine.tail204746.ts.net:8443/mcp
+   https://fraine.tail204746.ts.net/mcp
    ```
 
    （`/sse` でも可）
@@ -144,7 +144,7 @@ Authorization: Bearer {token}
 
 ```
 curl -H "Authorization: Bearer {token}" \
-  https://fraine.tail204746.ts.net:8443/mcp
+  https://fraine.tail204746.ts.net/mcp
 ```
 
 ---
@@ -154,7 +154,7 @@ curl -H "Authorization: Bearer {token}" \
 URL:
 
 ```
-https://fraine.tail204746.ts.net:10000
+https://fraine.tail204746.ts.net:8443
 ```
 
 アクセスするとトークン入力画面が表示される。ゲスト用トークンを入力してログイン。
@@ -185,7 +185,7 @@ https://fraine.tail204746.ts.net:10000
 3. サーバーを再起動（設定は起動時に読み込む）
 
 4. ゲストに渡すもの:
-   - URL: `https://fraine.tail204746.ts.net:10000`
+   - URL: `https://fraine.tail204746.ts.net:8443`
    - トークン文字列（Slack DM等で安全に共有）
 
 ---
@@ -215,7 +215,7 @@ https://fraine.tail204746.ts.net:10000
 |---|---|
 | 接続できない | Tailscale が起動中か、Funnel が3ポートすべて有効か確認（`tailscale serve status`） |
 | 認証失敗 | `data/auth_tokens.yaml` の token 値が正確か、`expires` が未来日か確認 |
-| ゲストUIが開かない | `start.bat` が起動済みか（ポート8501）、Funnel 10000番が有効か確認 |
+| ゲストUIが開かない | `start.bat` が起動済みか（ポート8501）、Funnel 8443番が有効か確認 |
 | 日次上限エラー | 翌日まで待つ。緊急時は `.env` の `MCP_DAILY_QUERY_LIMIT` を増やしてサーバー再起動 |
 | `daily_limit` エラー（MCP） | 同上 |
 

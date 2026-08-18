@@ -1,46 +1,53 @@
 ---
-version: "M7b-hotfix2"
-badge: "hotfix-2完了・確認待ち"
-next: "—"
-waiting_on: "発注者実機試験（コネクタ再登録→承認画面確認）"
+version: "Phase2"
+badge: "Phase2完了・外部疎通確認待ち"
+next: "発注者: Pixel10モバイル回線でhttps://fraine.tail204746.ts.net/.well-known/oauth-protected-resource 確認→claude.aiコネクタ再登録"
+waiting_on: "発注者実機試験（Pixel10モバイル・Tailscale OFF・Wi-Fiオフ）"
 ---
 
 # rag-system 現在地
 
-更新: 2026-08-17 ／ 更新者: PG
+更新: 2026-08-19 ／ 更新者: PG
 
 ## 状態
 
-- M1〜M7b-1 全フェーズ完了・検収済み
-- **M7b-2（W-3+W-4+W-5）: 実施・確認待ち**
+- M1〜M7b-2 全フェーズ完了・検収済み
+- **Phase 2（Funnel配置変更）: 実施済み・外部疎通確認待ち**
 
-## M7b-2 実施結果
+## Phase 2 実施結果
 
-| テスト | 結果 |
-|---|---|
-| 未認証時ログイン画面のみ表示 | PASS ✅ |
-| 管理者トークンでサイドバー付きUI | PASS ✅ |
-| guest-プレフィクスでゲストモード（サイドバー非表示） | PASS ✅ |
-| 無効トークン → エラー・再試行可能 | PASS ✅ |
-| 期限切れトークン → エラーメッセージ区別 | PASS ✅ |
-| MCP_DAILY_QUERY_LIMIT=2 で3回目拒否（MCP側） | PASS ✅ |
-| MCP_DAILY_QUERY_LIMIT=2 で3回目拒否（Streamlit側） | PASS ✅ |
-| stdio回帰（--transport stdio） | PASS ✅ |
-| 実機系（Funnel・モバイル） | 発注者依頼 |
+| W | 内容 | 結果 |
+|---|---|---|
+| W-1 | Tailscale Funnel配置変更（443→8766/MCP、8443→8501/Streamlit、10000→10000/healthz） | 完了 ✅ |
+| W-2 | .env MCP_PUBLIC_URL更新（:8443削除） | 完了 ✅ |
+| W-3 | .env.example更新・commit・push | 完了 ✅ |
+| W-4 | mcp-remote-setup.md URL更新・commit・push | 完了 ✅ |
+| W-5 | MCPサーバー再起動 → ローカル疎通確認 | 完了 ✅ |
+| W-5 | 外部疎通確認（Pixel10モバイル回線） | **発注者依頼** |
 
-## M7b-2 実装内容
+## W-5 ローカル疎通確認結果
 
-| W | 内容 |
-|---|---|
-| W-3 | Streamlitトークンゲート・ゲストモード（サイドバー・コスト・デバッグ非表示） |
-| W-4 | 日次実行上限（MCP_DAILY_QUERY_LIMIT・MCP側＋Streamlit側の両方） |
-| W-5 | mcp-remote-setup.md 全面改訂（三ポート構成・ゲストUI手順追加） |
+```json
+{
+  "resource": "https://fraine.tail204746.ts.net",
+  "authorization_servers": ["https://fraine.tail204746.ts.net"],
+  "bearer_methods_supported": ["header"]
+}
+```
 
-## 技術スタック（M7b-2完了時点）
+## Phase 2 Funnel構成（変更後）
+
+| 外部ポート | 転送先 | 用途 |
+|---|---|---|
+| 443（Funnel） | 8766 | MCPサーバー（claude.ai・ChatGPT） |
+| 8443（Funnel） | 8501 | ブラウザUI（Streamlit・ゲスト） |
+| 10000（Funnel） | 10000 | 予備healthz |
+
+## 技術スタック（Phase 2完了時点）
 
 - 検索: ruri-v3-310m(dense) + fugashi+BM25 → RRF → ruri-v3-reranker-310m
 - エージェント: Planner → Loop → Advisor → Web照合（法令API含む） → Composer
-- **公開: SSE `/sse` + Streamable HTTP `/mcp`（0.0.0.0:8766）→ Tailscale Funnel HTTPS 8443**
+- **公開: SSE `/sse` + Streamable HTTP `/mcp`（0.0.0.0:8766）→ Tailscale Funnel HTTPS 443**
 - **認証: OAuth 2.1承認画面方式（auth_tokens.yaml統合）+ Bearer直経路（既存互換）**
-- **ブラウザUI: Streamlit（0.0.0.0:8501）→ Tailscale Funnel HTTPS 10000・トークンゲート実装**
+- **ブラウザUI: Streamlit（0.0.0.0:8501）→ Tailscale Funnel HTTPS 8443・トークンゲート実装**
 - stdio: Claude Codeローカル利用として引き続き動作

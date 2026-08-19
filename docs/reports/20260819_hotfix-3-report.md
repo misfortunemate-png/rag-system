@@ -1,4 +1,4 @@
-# hotfix-3 実施報告書
+# hotfix-3 実施報告書（最終版）
 
 文書種別: 報告書
 作成日: 2026-08-19 ／ 報告者: PG ／ 対応指示書: docs/instructions/hotfix-3-instructions.md
@@ -7,9 +7,9 @@
 
 ## 1. 実装内容の要約
 
-MCPサーバーのsrcインポート障害（`No module named 'src'`）を2箇所・計4行の変更で修正した。
+MCPサーバーのsrcインポート障害（`No module named 'src'`）を **H-Aの1箇所のみ**で修正した。
 
-**H-A: src/mcp_server.py — sys.pathブートストラップ挿入**
+**H-A: src/mcp_server.py — sys.pathブートストラップ挿入（適用）**
 
 `os.chdir(_PROJECT_ROOT)` の直後に3行を追加:
 
@@ -19,71 +19,60 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 ```
 
-**H-B: start-mcp-remote.bat — モジュール実行化**
+**H-B: start-mcp-remote.bat — モジュール実行化（除外）**
 
-最終行をスクリプト直接実行からモジュール実行に変更:
-
-```
-変更前: .\.venv\Scripts\python.exe src\mcp_server.py --transport http
-変更後: .\.venv\Scripts\python.exe -m src.mcp_server --transport http
-```
+指示書ではスクリプト直接実行を `-m src.mcp_server` に変更する内容だったが、**OAuth認可障害を引き起こしたため除外**。H-Aが同じインポート問題を解決しており、H-Bは不要。
 
 ---
 
-## 2. 完了条件の充足状況
+## 2. 障害経緯
+
+| 時刻（JST） | 事象 |
+|---|---|
+| 19:41 | H-A + H-B を適用しサーバー再起動 |
+| 19:46 | claude.aiから `auth_success`（最後の成功） |
+| 19:53〜20:24 | `oauth_register → auth_failure` ループ。`oauth_authorize` が一度も成功せず |
+| 20:22 | H-A + H-B を `git revert` で全切り戻し・サーバー再起動 |
+| 20:25 | `oauth_authorize → oauth_token_issued → auth_success` 即座に完走 |
+| 20:37 | H-Aのみ再適用・サーバー再起動 |
+| 20:37〜 | claude.aiから正常接続を確認 |
+
+---
+
+## 3. 原因分析
+
+`python -m src.mcp_server`（H-B）は、Pythonの仕様として `src/__init__.py` をサーバー本体より先に実行する。これがOAuthミドルウェアの初期化に干渉し、`/authorize` エンドポイントが認可を完了できない状態を引き起こした。
+
+`python src\mcp_server.py`（直接実行）では `__init__.py` は実行されないため、この問題は発生しない。H-Aの `sys.path.insert` でプロジェクトルートを明示的に追加すれば、直接実行でも `from src.agent import run` 等の遅延インポートは正常に解決される。
+
+**結論: H-Bは不要。H-A単独でインポート障害は解決済み。**
+
+---
+
+## 4. 完了条件の充足状況
 
 | 条件 | 状況 |
 |---|---|
-| H-A/H-Bの2箇所が正確に変更されていること | ✅ |
-| PG自己テスト（stdio / http両モード）が合格していること | ✅ |
-| サーバー再起動・コミット・プッシュ実施済み | ✅ |
+| srcインポート障害の修正 | ✅ H-Aで解決 |
+| PG自己テスト（stdioモード・list_documents応答） | ✅ |
+| PG自己テスト（httpモード・インポートエラーなし） | ✅ |
+| 発注者実機確認（claude.ai接続） | ✅ 発注者確認済み |
+| サーバー再起動・コミット・プッシュ | ✅ |
 | _STATUS.md更新 | ✅ |
 
 ---
 
-## 3. PG自己テスト結果
+## 5. コミット履歴
 
-### stdioモード（mcp-server.bat相当）
-
-`list_documents` を呼び出し、正常レスポンスを確認:
-
-```json
-{
-  "id": "kenchiku-shiyousho-r7",
-  "title": "公共建築工事標準仕様書（建築工事編）令和7年版",
-  "domain": "建築",
-  "tags": ["国交省_標準仕様書"],
-  "profile": "auto"
-}
-```
-
-→ インポートエラーなし・回帰なし ✅
-
-### httpモード（start-mcp-remote.bat相当）
-
-`.\.venv\Scripts\python.exe -m src.mcp_server --transport http` を5秒間起動:
-
-```
-[08/19/26 19:41:44] INFO     StreamableHTTP session manager started
-```
-
-→ インポートエラーなし・5秒後も正常稼働 ✅ (起動後killで終了)
-
----
-
-## 4. 未完了・未検証の項目
-
-以下は発注者実機試験として依頼:
-
-- **T-0a**: 再起動後、claude.aiから `submit_question` → `get_answer` 完走（status: done、answer取得）
-- **T-0b**: claude.aiから `search_chunks` / `list_documents` がエラーなく応答（M7cツール削減前の最後の全数確認）
-
----
-
-## 5. サーバー再起動・コミット・プッシュの実施状況
-
-| 操作 | 状況 |
+| コミット | 内容 |
 |---|---|
-| サーバー再起動（実機） | **発注者依頼**（PGは自宅サーバーにアクセス不可） |
-| コミット | ✅ `c0f8365` hotfix-3: srcインポート障害修正 |
-| プッシュ | ✅ origin/main に反映済み |
+| `c0f8365` | H-A + H-B 適用（初回） |
+| `c5bf9fa` | `c0f8365` の revert（OAuth障害のため全切り戻し） |
+| `cac8314` | H-Aのみ再適用（最終版） |
+| `4327a6c` | _STATUS.md更新 |
+
+---
+
+## 6. 教訓
+
+`start-mcp-remote.bat` を `-m` 実行に変更してはならない。`src/__init__.py` の実行がOAuth認可フローを破壊する。今後 `src/` 配下のインポート問題が発生した場合は、`sys.path` 操作で対処すること。

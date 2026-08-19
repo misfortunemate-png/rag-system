@@ -29,13 +29,23 @@
 | コミット・プッシュ | ✅ 本報告と同時に実施 |
 | _STATUS.md更新 | ✅ m7c-1-done |
 
-## 3. PG自己テスト結果
+## 3. テスト結果
+
+### PG自己テスト
 
 | テスト項目 | 結果 |
 |---|---|
 | stdioモード: 8ツール登録確認 | ✅ list_documents, search_chunks, read_section, web_search_tool, fetch_law, submit_question, get_answer, report_feedback |
 | httpモード: remove_tool後3ツールのみ | ✅ submit_question, get_answer, report_feedback |
 | ゲストUI: caption削除・構文検証 | ✅ 旧表記なし・AST解析合格 |
+
+### 実機系テスト
+
+| テスト項目 | 結果 |
+|---|---|
+| T-1: claude.aiコネクタでツール一覧が3本のみ | ✅ Get answer / Report feedback / Submit question の3本のみ表示確認 |
+| T-2: submit_question → get_answer 完走 | ✅ status: done、answer取得（143秒、$0.005、出典4チャンク引用） |
+| T-3: OAuth認可フローが正常に動作 | ✅ コネクタ再接続時にOAuth認可画面経由でトークン発行・接続成功 |
 
 ## 4. W-1ツール削減実装方式
 
@@ -47,10 +57,7 @@
 
 ## 5. 未完了・未検証の項目
 
-実機系テスト（発注者に依頼）:
-- T-1: claude.aiのコネクタ設定でツール一覧が3本のみ表示される
-- T-2: submit_question → get_answer 完走（status: done、answer取得）
-- T-3: OAuth認可フローが正常に動作する（hotfix-3教訓の回帰確認）
+なし（全項完了）
 
 ## 6. サーバー再起動・コミット・プッシュの実施状況
 

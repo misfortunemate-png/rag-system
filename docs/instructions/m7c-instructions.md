@@ -197,6 +197,7 @@ RATE_LIMIT = 60      # 認証済みリクエストの上限（変更: 10→60）
 ## 禁止事項
 
 - ミドルウェアでのJSON-RPCボディ解析によるツール名フィルタ（W-1。重く壊れやすい）
+- start-mcp-remote.batの`-m src.mcp_server`への変更（hotfix-3教訓: `-m`実行は`src/__init__.py`を先に実行しOAuth初期化を破壊する）
 - 進捗更新へのLLM呼び出し追加（W-3。P-5/P-9違反）
 - data/answers/*.jsonlのリポジトリへのコミット（W-4。コーパス由来本文を含む）
 - submit_question内のジョブ辞書への`question`フィールドの格納方法の変更。report_feedbackのメモリ解決がこれに依存する

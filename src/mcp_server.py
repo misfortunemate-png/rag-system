@@ -320,11 +320,8 @@ def fetch_law(law_id: str) -> dict:
 @mcp.tool()
 def submit_question(question: str, style: str = "standard", domains: list[str] | None = None) -> dict:
     """
-    質問をサブミットしjob_idを即時返却する。
-    style: brief / standard / detailed。
-    domains: 検索対象分野のリスト（例: ["消防","法令"]）。省略で全分野対象。
-    get_answerでジョブ状態をポーリングする。
-    同時実行1・待機キュー2。超過時はerrorを返す。
+    質問を自然言語で送信し、回答生成ジョブを開始する。
+    回答生成には通常2〜5分かかる。返却されたjob_idを控え、get_answerで結果を確認すること。
     """
     global _pending_count
 
@@ -382,7 +379,12 @@ def submit_question(question: str, style: str = "standard", domains: list[str] |
 
 @mcp.tool()
 def get_answer(job_id: str) -> dict:
-    """ジョブ状態を返す。status: running / done / error / not_found。"""
+    """
+    ジョブ状態を返す。status: running / done / error / not_found。
+    status=runningの間は30秒以上あけて再確認すること。
+    status=doneのanswerフィールドは、要約・再構成・抜粋をせず原文のままユーザーに転記すること。
+    回答には出典（文書名・条番号）が含まれており、それも省略しないこと。
+    """
     with _jobs_lock:
         job = _jobs.get(job_id)
 
@@ -414,7 +416,7 @@ def get_answer(job_id: str) -> dict:
 @mcp.tool()
 def report_feedback(job_id: str, verdict: str, correction: str = "", evidence: str = "") -> dict:
     """
-    フィードバックを受信箱に記録する（自動反映なし）。
+    回答の正誤をユーザーが判定した場合にフィードバックを記録する（自動反映なし）。
     verdict: correct / incorrect / incomplete。
     """
     valid_verdicts = {"correct", "incorrect", "incomplete"}
@@ -1016,6 +1018,11 @@ def _run_http(port: int) -> None:
     except (FileNotFoundError, ValueError) as e:
         print(f"[ERROR] {e}")
         raise SystemExit(1)
+
+    # W-1: httpトランスポートでは素材層ツール5本を除去し、公開ツールを3本に限定
+    _REMOTE_EXCLUDED = ["list_documents", "search_chunks", "read_section", "fetch_law", "web_search_tool"]
+    for name in _REMOTE_EXCLUDED:
+        mcp.remove_tool(name)
 
     public_url = os.environ.get("MCP_PUBLIC_URL", "https://fraine.tail204746.ts.net:8443").rstrip("/")
     token_ids = list(_AUTH_TOKENS.values())

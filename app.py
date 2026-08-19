@@ -571,7 +571,6 @@ else:
 
 page_title = "規程エージェント（ゲスト）" if is_guest else "規程エージェント"
 st.title(page_title)
-st.caption("公共建築工事標準仕様書（電気設備工事編）令和7年版")
 
 hcol1, hcol2 = st.columns([4, 1])
 with hcol1:

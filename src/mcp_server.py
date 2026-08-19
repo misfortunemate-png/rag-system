@@ -30,6 +30,9 @@ from pathlib import Path
 # ── CWD = project root (parent of this file's src/ directory) ────────────────
 _PROJECT_ROOT = Path(__file__).parent.parent
 os.chdir(_PROJECT_ROOT)
+import sys
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 # ── .env ──────────────────────────────────────────────────────────────────────
 from dotenv import load_dotenv  # noqa: E402

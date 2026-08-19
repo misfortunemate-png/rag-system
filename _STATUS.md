@@ -1,8 +1,8 @@
 ---
-version: "hotfix-3-reverted"
-badge: "hotfix-3切り戻し済み・M-7再定義待ち"
-next: "PM: M-7再定義指示書の発行"
-waiting_on: "PM指示書"
+version: "hotfix-3-done"
+badge: "hotfix-3完了（H-Aのみ）"
+next: "次マイルストーン指示書待ち"
+waiting_on: "指示書"
 ---
 
 # rag-system 現在地
@@ -13,7 +13,7 @@ waiting_on: "PM指示書"
 
 - M1〜M7b-2 全フェーズ完了・検収済み
 - Phase 2（Funnel配置変更）: 実施済み
-- **hotfix-3: 切り戻し済み（submit_question不通のためrevert・M-7再定義待ち）**
+- **hotfix-3: H-Aのみ適用で完了（H-Bは`-m`実行がOAuth認可を破壊するため除外）**
 
 ## Phase 2 実施結果
 

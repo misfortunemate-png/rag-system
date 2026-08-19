@@ -514,6 +514,7 @@ def _run_loop(
     advisor_state: dict,
     scope_text: str = "",
     domains: list[str] | None = None,
+    progress_cb=None,
 ) -> tuple:
     """
     Returns (trace, all_chunks, retrieved, debug, max_loops_hit, early_stop).
@@ -543,6 +544,8 @@ def _run_loop(
     total_search_calls = 0
 
     for loop_num in range(config.max_loops):
+        if progress_cb:
+            progress_cb("searching", f"関連条文を検索中（{loop_num + 1}巡目）")
         response = client.chat(messages, TOOLS, system)
         total_usage["input_tokens"] += response.usage.get("input_tokens", 0)
         total_usage["output_tokens"] += response.usage.get("output_tokens", 0)
@@ -646,6 +649,8 @@ def _run_loop(
             and stall_hit
         ):
             logger.info("advisor firing: stall detected at loop %d", loop_num + 1)
+            if progress_cb:
+                progress_cb("reviewing", "回答を検証しています")
             adv_result, adv_debug = _run_advisor(
                 question, plan, trace, all_chunks, config, scope_text
             )
@@ -909,7 +914,7 @@ def make_composer_stream(
 
 # ── Main pre-composer entry ───────────────────────────────────────────────────
 
-def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
+def run_pre_composer(question: str, config: AgentConfig | None = None, progress_cb=None) -> dict:
     """
     Run planner + advisor (pre/mid/post-loop) + execution loop.
     Returns partial result dict (no composer step).
@@ -926,6 +931,8 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
     user_domains = config.selected_domains  # None = all
 
     # ── Planner ───────────────────────────────────────────────────────────────
+    if progress_cb:
+        progress_cb("planning", "質問を分析し検索計画を立てています")
     if config.planner_enabled:
         planner_output, planner_debug = _run_planner(question, config, scope_text, user_domains)
         logger.info("planner: %s", (planner_output or "")[:200])
@@ -940,12 +947,15 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
     # ── Execution loop ────────────────────────────────────────────────────────
     advisor_state = {"fired": False, "result": None, "debug": {}}
     trace, all_chunks, retrieved, loop_debug, max_loops_hit, early_stop = _run_loop(
-        question, planner_output, config, advisor_state, scope_text, effective_domains
+        question, planner_output, config, advisor_state, scope_text, effective_domains,
+        progress_cb=progress_cb,
     )
 
     # ── Post-loop advisor: 未決着 ─────────────────────────────────────────────
     if not advisor_state["fired"] and config.advisor_trigger_unresolved and max_loops_hit:
         logger.info("advisor firing: post-loop unresolved")
+        if progress_cb:
+            progress_cb("reviewing", "回答を検証しています")
         adv_result, adv_debug = _run_advisor(
             question, planner_output, trace, all_chunks, config, scope_text
         )
@@ -1035,7 +1045,7 @@ def run_pre_composer(question: str, config: AgentConfig | None = None) -> dict:
 
 # ── Main entry (non-streaming) ────────────────────────────────────────────────
 
-def run(question: str, config: AgentConfig | None = None) -> dict:
+def run(question: str, config: AgentConfig | None = None, progress_cb=None) -> dict:
     """
     Run the full pipeline (non-streaming).
     Returns dict with keys:
@@ -1046,8 +1056,10 @@ def run(question: str, config: AgentConfig | None = None) -> dict:
     if config is None:
         config = AgentConfig()
 
-    pre = run_pre_composer(question, config)
+    pre = run_pre_composer(question, config, progress_cb=progress_cb)
 
+    if progress_cb:
+        progress_cb("composing", "回答を作成しています")
     answer, cited_ids, raw_composer, composer_debug = _run_composer(
         question, pre["all_chunks"], config,
         advisor_conclude_reason=pre.get("advisor_conclude_reason"),

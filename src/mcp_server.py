@@ -142,12 +142,30 @@ def _job_mark_done(job_id: str) -> None:
 # ── Background worker ─────────────────────────────────────────────────────────
 
 
+def _persist_answer(job_id: str, question: str, style: str, domains: list[str] | None, result: dict) -> None:
+    answers_dir = _PROJECT_ROOT / "data" / "answers"
+    answers_dir.mkdir(parents=True, exist_ok=True)
+    month_file = answers_dir / f"{datetime.now(timezone.utc).strftime('%Y-%m')}.jsonl"
+    entry = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "job_id": job_id,
+        "question": question,
+        "style": style,
+        "domains": domains,
+        "answer": result.get("answer", ""),
+        "cited_chunk_ids": result.get("cited_chunk_ids", []),
+        "meta": result.get("meta", {}),
+    }
+    with open(month_file, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
 def _run_job(job_id: str, question: str, style: str, domains: list[str] | None = None) -> None:
     global _pending_count
 
     _exec_semaphore.acquire()
     try:
-        _job_set(job_id, status="running", started_at=time.time())
+        _job_set(job_id, status="running", started_at=time.time(), stage="queued", detail="実行待ちです")
         t0 = time.perf_counter()
 
         from src.agent import run as agent_run
@@ -160,7 +178,10 @@ def _run_job(job_id: str, question: str, style: str, domains: list[str] | None =
 
         _log("job_submitted", job_id=job_id, question=question[:200], style=style, domains=domains)
 
-        result = agent_run(question, config)
+        def _progress(stage: str, detail: str) -> None:
+            _job_set(job_id, stage=stage, detail=detail)
+
+        result = agent_run(question, config, progress_cb=_progress)
         elapsed = round(time.perf_counter() - t0, 2)
 
         # Accumulate per-stage usage & cost
@@ -214,6 +235,7 @@ def _run_job(job_id: str, question: str, style: str, domains: list[str] | None =
         }
 
         _job_set(job_id, status="done", result=job_result, elapsed_s=elapsed)
+        _persist_answer(job_id, question, style, domains, job_result)
         _job_mark_done(job_id)
 
         _log(
@@ -395,7 +417,14 @@ def get_answer(job_id: str) -> dict:
 
     if status in ("queued", "running"):
         elapsed = round(time.time() - job.get("submitted_at", time.time()), 1)
-        return {"status": "running", "job_id": job_id, "elapsed_s": elapsed}
+        return {
+            "status": "running",
+            "job_id": job_id,
+            "elapsed_s": elapsed,
+            "stage": job.get("stage", "queued"),
+            "detail": job.get("detail", "実行待ちです"),
+            "hint": "回答生成は通常2〜5分かかります。次の確認は30秒以上あけてください。",
+        }
 
     if status == "done":
         res = job.get("result", {})
@@ -426,18 +455,48 @@ def report_feedback(job_id: str, verdict: str, correction: str = "", evidence: s
     correction = correction[:5000]
     evidence = evidence[:2000]
 
+    question = ""
+    answer = ""
+    resolved = False
+
     with _jobs_lock:
         job = _jobs.get(job_id)
-    question = job.get("question", "") if job else ""
+    if job:
+        question = job.get("question", "")
+        answer = job.get("result", {}).get("answer", "")
+        resolved = True
+
+    if not resolved:
+        answers_dir = _PROJECT_ROOT / "data" / "answers"
+        if answers_dir.exists():
+            for month_file in sorted(answers_dir.glob("*.jsonl"), reverse=True):
+                with open(month_file, encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            row = json.loads(line)
+                            if row.get("job_id") == job_id:
+                                question = row.get("question", "")
+                                answer = row.get("answer", "")
+                                resolved = True
+                                break
+                        except Exception:
+                            pass
+                if resolved:
+                    break
 
     entry = {
         "ts": datetime.now(timezone.utc).isoformat(),
         "source_client": "mcp",
         "job_id": job_id,
         "question": question,
+        "answer": answer,
         "verdict": verdict,
         "correction": correction,
         "evidence": evidence,
+        "resolved": resolved,
     }
 
     FEEDBACK_INBOX.parent.mkdir(parents=True, exist_ok=True)
@@ -526,13 +585,13 @@ def _load_auth_tokens_by_id() -> dict[str, str]:
 
 
 class _AuthRateLimitMiddleware:
-    """ASGI middleware: rate limit → brute-force block → Bearer auth.
+    """ASGI middleware: brute-force block → Bearer auth → rate limit (by auth_id).
 
     Thread-safe rate counters are shared across all requests.
     auth failure → asyncio.sleep(3) to slow brute-force.
     """
 
-    RATE_LIMIT = 10      # max requests per IP per minute
+    RATE_LIMIT = 60      # max authenticated requests per auth_id per minute
     RATE_WINDOW = 60.0
     BF_LIMIT = 5         # failures before temp block
     BF_WINDOW = 60.0
@@ -565,19 +624,7 @@ class _AuthRateLimitMiddleware:
             await self._send_error(send, 403, f"Blocked for {remaining}s")
             return
 
-        # 2. Rate limit check
-        with _sec_lock:
-            q = _rate_counters.setdefault(ip, collections.deque())
-            cutoff = now - self.RATE_WINDOW
-            while q and q[0] < cutoff:
-                q.popleft()
-            if len(q) >= self.RATE_LIMIT:
-                _log("rate_limit_exceeded", ip=ip, count=len(q))
-                await self._send_error(send, 429, "Too Many Requests")
-                return
-            q.append(now)
-
-        # 3. Token check (Bearer header or URL query parameter)
+        # 2. Token check (Bearer header or URL query parameter)
         headers = {k.lower(): v for k, v in scope.get("headers", [])}
         auth_bytes: bytes = headers.get(b"authorization", b"")
         auth_str = auth_bytes.decode("utf-8", errors="replace")
@@ -585,7 +632,6 @@ class _AuthRateLimitMiddleware:
         if auth_str.startswith("Bearer "):
             token = auth_str[len("Bearer "):].strip()
         if not token:
-            # Fallback: ?token= query parameter (for claude.ai connector)
             qs = scope.get("query_string", b"").decode("utf-8", errors="replace")
             for part in qs.split("&"):
                 if part.startswith("token="):
@@ -609,6 +655,18 @@ class _AuthRateLimitMiddleware:
             _log("auth_failure", ip=ip)
             await self._send_error(send, 401, "Unauthorized")
             return
+
+        # 3. Rate limit check (keyed by auth_id, not IP)
+        with _sec_lock:
+            q = _rate_counters.setdefault(auth_id, collections.deque())
+            cutoff = now - self.RATE_WINDOW
+            while q and q[0] < cutoff:
+                q.popleft()
+            if len(q) >= self.RATE_LIMIT:
+                _log("rate_limit_exceeded", auth_id=auth_id, count=len(q))
+                await self._send_error(send, 429, "Too Many Requests")
+                return
+            q.append(now)
 
         # 4. Success — attach auth_id to scope for downstream logging
         ext = scope.setdefault("extensions", {})

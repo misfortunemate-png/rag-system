@@ -12,3 +12,4 @@ data/chroma/
 logs/*.log
 data/feedback/inbox.jsonl
 data/auth_tokens.yaml
+data/answers/

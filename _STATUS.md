@@ -1,8 +1,8 @@
 ---
-version: "hotfix-3"
-badge: "hotfix-3完了・発注者実機試験待ち"
-next: "発注者: T-0a（claude.ai submit_question→get_answer完走）・T-0b（search_chunks/list_documents全数確認）"
-waiting_on: "発注者実機試験（T-0a・T-0b）"
+version: "Phase2"
+badge: "Phase2完了・外部疎通確認待ち"
+next: "発注者: Pixel10モバイル回線でhttps://fraine.tail204746.ts.net/.well-known/oauth-protected-resource 確認→claude.aiコネクタ再登録"
+waiting_on: "発注者実機試験（Pixel10モバイル・Tailscale OFF・Wi-Fiオフ）"
 ---
 
 # rag-system 現在地
@@ -12,8 +12,7 @@ waiting_on: "発注者実機試験（T-0a・T-0b）"
 ## 状態
 
 - M1〜M7b-2 全フェーズ完了・検収済み
-- Phase 2（Funnel配置変更）: 実施済み・外部疎通確認済み
-- **hotfix-3（srcインポート障害修正）: 実施済み・発注者実機試験待ち**
+- **Phase 2（Funnel配置変更）: 実施済み・外部疎通確認待ち**
 
 ## Phase 2 実施結果
 
